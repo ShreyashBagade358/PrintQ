@@ -1,0 +1,37 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { AlertTriangle, RefreshCw, Home } from "lucide-react"
+import Link from "next/link"
+
+export default function ErrorPage({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-red-50/50 to-background p-4">
+      <div className="text-center max-w-md">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-red-100 mb-6">
+          <AlertTriangle className="h-10 w-10 text-red-600" />
+        </div>
+        <h1 className="text-4xl font-bold tracking-tight mb-3">Something went wrong!</h1>
+        <p className="text-muted-foreground mb-8">
+          An unexpected error occurred. Our team has been notified.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={reset} variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" /> Try Again
+          </Button>
+          <Link href="/public/landing">
+            <Button className="gap-2">
+              <Home className="h-4 w-4" /> Go Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}

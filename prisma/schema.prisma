@@ -1,0 +1,554 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  SHOP_OWNER
+  STAFF
+  CUSTOMER
+}
+
+enum ShopStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  RECEIVED
+  IN_QUEUE
+  PROCESSING
+  PRINTING
+  QUALITY_CHECK
+  READY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum QueuePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum QueueItemStatus {
+  QUEUED
+  PRINTING
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum PrinterStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  ERROR
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+}
+
+enum NotificationType {
+  ORDER
+  PAYMENT
+  SYSTEM
+  ALERT
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  emailVerified     DateTime?
+  password          String?
+  phone             String?
+  image             String?
+  role              Role      @default(CUSTOMER)
+  isTwoFactorEnabled Boolean  @default(false)
+  twoFactorSecret   String?
+  stripeCustomerId  String?
+
+  ownedShops        Shop[]           @relation("ShopOwner")
+  staffEntries      Staff[]
+  customers         Customer[]
+  orders            Order[]
+  tickets           Ticket[]
+  ticketMessages    TicketMessage[]
+  notifications     Notification[]
+  blogPosts         BlogPost[]
+  activityLogs      ActivityLog[]
+  sessions          Session[]
+  accounts          Account[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Shop {
+  id             String     @id @default(cuid())
+  name           String
+  slug           String     @unique
+  address        String
+  city           String
+  state          String
+  pinCode        String
+  phone          String
+  email          String
+  logo           String?
+  status         ShopStatus @default(PENDING)
+  timezone       String     @default("Asia/Kolkata")
+  autoDeleteDays Int        @default(7)
+  primaryColor   String     @default("#2563eb")
+  customDomain   String?
+  favicon        String?
+  qrToken        String?   @unique
+  qrRegeneratedAt DateTime?
+
+  ownerId String
+  owner   User   @relation("ShopOwner", fields: [ownerId], references: [id])
+
+  customers     Customer[]
+  orders        Order[]
+  printers      Printer[]
+  queueItems    QueueItem[]
+  staff         Staff[]
+  pricingRules  PricingRule[]
+  invoices      Invoice[]
+  subscriptions Subscription[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([ownerId])
+}
+
+model Customer {
+  id         String @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  totalOrders Int   @default(0)
+  totalSpent  Float  @default(0)
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  userId String?
+  user   User?  @relation(fields: [userId], references: [id])
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, shopId])
+  @@index([shopId])
+  @@index([email])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderId         String      @unique
+  status          OrderStatus @default(PENDING)
+  priority        QueuePriority @default(NORMAL)
+  pages           Int
+  copies          Int
+  color           String
+  paperSize       String
+  sides           String
+  finishing       String?
+  amount          Float
+  discount        Float       @default(0)
+  total           Float
+  notes           String?
+  printNotes      String?
+  printSettings   Json?
+  estimatedReadyAt DateTime?
+  completedAt     DateTime?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  files       PrintFile[]
+  queueItems  QueueItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([shopId])
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+model PrintFile {
+  id      String @id @default(cuid())
+  name    String
+  url     String
+  size    Int
+  type    String
+  pages   Int
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model Printer {
+  id             String        @id @default(cuid())
+  name           String
+  model          String
+  status         PrinterStatus @default(ONLINE)
+  paperLevel     Int           @default(100)
+  inkLevel       Int           @default(100)
+  paperSize      String[]
+  colorCapable   Boolean       @default(true)
+  duplexCapable  Boolean       @default(true)
+  shopId         String
+  shop           Shop          @relation(fields: [shopId], references: [id])
+  queueItems     QueueItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+  @@index([status])
+}
+
+model QueueItem {
+  id          String          @id @default(cuid())
+  position    Int
+  priority    QueuePriority   @default(NORMAL)
+  status      QueueItemStatus @default(QUEUED)
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  shopId  String
+  shop    Shop    @relation(fields: [shopId], references: [id])
+  orderId String
+  order   Order   @relation(fields: [orderId], references: [id])
+
+  printerId String?
+  printer   Printer? @relation(fields: [printerId], references: [id])
+
+  assignedTo String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+model PricingRule {
+  id          String  @id @default(cuid())
+  paperSize   String
+  colorType   String
+  pricePerPage Float
+  minCopies   Int?
+  isActive    Boolean @default(true)
+  shopId      String
+  shop        Shop    @relation(fields: [shopId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, paperSize, colorType])
+  @@index([shopId])
+}
+
+model Staff {
+  id          String      @id @default(cuid())
+  role        String      @default("staff")
+  permissions String[]
+  status      StaffStatus @default(INVITED)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, shopId])
+  @@index([shopId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  stripeSubscriptionId String?
+  stripeCustomerId     String?
+
+  shopId String @unique
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([shopId])
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  price       Float
+  yearlyPrice Float
+  features    String[]
+  limits      Json
+  isActive    Boolean  @default(true)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  invoiceId        String        @unique
+  amount           Float
+  status           PaymentStatus @default(PENDING)
+  dueDate          DateTime
+  paidAt           DateTime?
+  stripeInvoiceId  String?
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+  @@index([status])
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discountType  String
+  discountValue Float
+  minOrder      Float?
+  maxUses       Int?
+  usedCount     Int       @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  title   String
+  message String
+  type    NotificationType
+  read    Boolean          @default(false)
+  link    String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  shopId String?
+  shop   Shop?  @relation(fields: [shopId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([shopId])
+}
+
+model Ticket {
+  id          String        @id @default(cuid())
+  subject     String
+  message     String
+  status      TicketStatus  @default(OPEN)
+  priority    QueuePriority @default(NORMAL)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  shopId      String?
+  assignedTo  String?
+  messages    TicketMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  message   String
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  excerpt   String
+  content   String
+  image     String?
+  category  String
+  tags      String[]
+  published Boolean  @default(false)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([published])
+}
+
+model CMSPage {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String
+  type      String   @default("page")
+  published Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([type])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  ip        String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  shopId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([shopId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@index([key])
+}
