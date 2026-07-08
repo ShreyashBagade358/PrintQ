@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic"
 
 export async function POST(req: Request) {
   const body = await req.text()
   const signature = req.headers.get("stripe-signature")!
+
+  const { getStripeInstance } = await import("@/lib/stripe")
+  const stripe = getStripeInstance()
 
   let event
   try {

@@ -1,6 +1,6 @@
 "use server"
 
-import { stripe } from "@/lib/stripe"
+import { getStripeInstance } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
@@ -11,6 +11,7 @@ export async function createPaymentIntentAction(amount: number, orderId?: string
   try {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
 
+    const stripe = getStripeInstance()
     let customerId = user?.stripeCustomerId
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -43,6 +44,7 @@ export async function createPaymentIntentAction(amount: number, orderId?: string
 
 export async function confirmOrderPaymentAction(paymentIntentId: string) {
   try {
+    const stripe = getStripeInstance()
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
     return { status: paymentIntent.status }
   } catch {
