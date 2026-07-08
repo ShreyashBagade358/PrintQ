@@ -76,7 +76,7 @@ export const authConfig: NextAuthConfig = {
     },
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = user.id!
         token.role = (user as Record<string, unknown>).role as string
       }
       return token
