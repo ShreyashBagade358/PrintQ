@@ -44,7 +44,11 @@ export default function ShopDashboardPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 15000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
   const statCards = data ? [
     { icon: IndianRupee, label: "Revenue", value: formatCurrency(data.stats.totalRevenue), change: "", trend: "up" as const },

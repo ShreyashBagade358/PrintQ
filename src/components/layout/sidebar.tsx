@@ -13,6 +13,7 @@ import {
   Receipt,
   CreditCard,
   UserCog,
+  User,
   Bell,
   Settings,
   LogOut,
@@ -41,6 +42,7 @@ const shopLinks = [
   { href: "/shop/staff", label: "Staff", icon: UserCog },
   { href: "/shop/notifications", label: "Notifications", icon: Bell },
   { href: "/shop/reports", label: "Reports", icon: FileText },
+  { href: "/shop/profile", label: "Profile", icon: User },
   { href: "/shop/settings", label: "Settings", icon: Settings },
 ]
 

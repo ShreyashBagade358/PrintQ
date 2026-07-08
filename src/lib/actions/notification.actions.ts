@@ -44,6 +44,14 @@ export async function markAllNotificationsReadAction() {
   return { success: true }
 }
 
+export async function getUnreadNotificationCountAction() {
+  const session = await auth()
+  if (!session?.user) return 0
+  return prisma.notification.count({
+    where: { userId: session.user.id, read: false },
+  })
+}
+
 export async function createNotificationAction(
   userId: string,
   title: string,

@@ -4,6 +4,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
+import { createNotificationAction } from "./notification.actions"
 
 const customerOrderSchema = z.object({
   customerEmail: z.string().email(),
@@ -21,6 +22,7 @@ const customerOrderSchema = z.object({
   pageRange: z.enum(["all", "custom"]).default("all"),
   customPageRange: z.string().optional(),
   finishingOptions: z.array(z.string()).default([]),
+  paymentMethod: z.enum(["card", "pay_later"]).default("card"),
   shopId: z.string().optional(),
   files: z.array(z.object({
     name: z.string(),
@@ -43,7 +45,7 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
     customerEmail, customerName, customerPhone, pages, copies,
     color, paperSize, sides, finishing, notes,
     orientation, printQuality, pageRange, customPageRange, finishingOptions,
-    files, shopId: connectedShopId,
+    paymentMethod, files, shopId: connectedShopId,
   } = validated.data
 
   const shop = connectedShopId
@@ -64,6 +66,11 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
         shopId: shop.id,
         userId: session.user.id,
       },
+    })
+  } else if (!customer.userId) {
+    customer = await prisma.customer.update({
+      where: { id: customer.id },
+      data: { userId: session.user.id },
     })
   }
 
@@ -95,7 +102,7 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
       discount,
       total,
       notes,
-      status: "IN_QUEUE",
+      status: paymentMethod === "pay_later" ? "RECEIVED" : "IN_QUEUE",
       printSettings: {
         orientation,
         printQuality,
@@ -118,23 +125,122 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
     },
   })
 
-  await prisma.queueItem.create({
-    data: {
-      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-      status: "QUEUED",
-      shopId: shop.id,
-      orderId: order.id,
-    },
+  const staffMembers = await prisma.staff.findMany({
+    where: { shopId: shop.id, status: "ACTIVE" },
+    select: { userId: true },
   })
+  const notifyUserIds = [shop.ownerId, ...staffMembers.map(s => s.userId)]
+  await Promise.all(notifyUserIds.map(uid =>
+    createNotificationAction(
+      uid,
+      "New Order Received",
+      `Order ${order.orderId} from ${customerName} has been placed.`,
+      "ORDER",
+      `/shop/orders/${order.id}`,
+      shop.id,
+    )
+  ))
 
-  await prisma.customer.update({
-    where: { id: customer.id },
-    data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
-  })
+  if (paymentMethod !== "pay_later") {
+    await prisma.queueItem.create({
+      data: {
+        position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
+        status: "QUEUED",
+        shopId: shop.id,
+        orderId: order.id,
+      },
+    })
+
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
+    })
+  }
 
   revalidatePath("/shop/orders")
   revalidatePath("/shop/dashboard")
   revalidatePath("/shop/queue")
 
   return { success: true, orderId: order.orderId }
+}
+
+export async function getTrackOrderAction(orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { orderId },
+    include: {
+      customer: true,
+      files: true,
+      queueItems: {
+        include: { printer: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  })
+  if (!order) return null
+  return {
+    id: order.id,
+    orderId: order.orderId,
+    status: order.status,
+    pages: order.pages,
+    copies: order.copies,
+    color: order.color,
+    paperSize: order.paperSize,
+    total: order.total,
+    estimatedReadyAt: order.estimatedReadyAt?.toISOString() || null,
+    completedAt: order.completedAt?.toISOString() || null,
+    createdAt: order.createdAt.toISOString(),
+    customer: order.customer
+      ? { name: order.customer.name, email: order.customer.email, phone: order.customer.phone }
+      : null,
+    files: order.files.map((f) => ({
+      id: f.id, name: f.name, url: f.url, size: f.size, pages: f.pages, type: f.type,
+    })),
+    queueItems: order.queueItems.map((qi) => ({
+      id: qi.id,
+      status: qi.status,
+      startedAt: qi.startedAt?.toISOString() || null,
+      completedAt: qi.completedAt?.toISOString() || null,
+      createdAt: qi.createdAt.toISOString(),
+      printer: qi.printer ? { id: qi.printer.id, name: qi.printer.name } : null,
+    })),
+  }
+}
+
+export async function getCustomerOrdersAction() {
+  const session = await auth()
+  if (!session?.user) return []
+
+  let customer = await prisma.customer.findFirst({
+    where: { userId: session.user.id },
+  })
+
+  if (!customer && session.user.email) {
+    customer = await prisma.customer.findFirst({
+      where: { email: session.user.email },
+    })
+    if (customer && !customer.userId) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { userId: session.user.id },
+      })
+    }
+  }
+
+  if (!customer) return []
+
+  const orders = await prisma.order.findMany({
+    where: { customerId: customer.id },
+    include: { shop: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return orders.map((o) => ({
+    id: o.id,
+    orderId: o.orderId,
+    status: o.status,
+    pages: o.pages,
+    total: o.total,
+    createdAt: o.createdAt.toISOString(),
+    shopName: o.shop?.name || null,
+  }))
 }

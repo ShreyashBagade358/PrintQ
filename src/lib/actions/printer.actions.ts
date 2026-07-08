@@ -36,10 +36,15 @@ export async function addPrinterAction(_prevState: unknown, formData: FormData) 
   const shop = await prisma.shop.findFirst({ where: { ownerId: session.user.id } })
   if (!shop) return { error: "No shop found" }
 
-  const raw: Record<string, unknown> = {}
+  const raw: Record<string, unknown> = {
+    colorCapable: false,
+    duplexCapable: false,
+  }
   for (const [key, value] of formData.entries()) {
     if (key === "paperSizes") {
       raw[key] = JSON.parse(value as string)
+    } else if (key === "colorCapable" || key === "duplexCapable") {
+      raw[key] = value === "true"
     } else {
       raw[key] = value
     }
@@ -48,10 +53,11 @@ export async function addPrinterAction(_prevState: unknown, formData: FormData) 
   const validated = addPrinterSchema.safeParse(raw)
   if (!validated.success) return { error: validated.error.errors[0].message }
 
+  const { paperSizes, ...printerData } = validated.data
   await prisma.printer.create({
     data: {
-      ...validated.data,
-      paperSize: validated.data.paperSizes,
+      ...printerData,
+      paperSize: paperSizes,
       shopId: shop.id,
     },
   })

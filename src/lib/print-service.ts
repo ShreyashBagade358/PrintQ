@@ -154,7 +154,7 @@ export async function printFile(
       cmd += ` -o sides=${options.sides}`
     }
 
-    if (options?.color === false) {
+    if (options?.color === false && !options?.colorMode) {
       cmd += " -o ColorModel=Gray"
     }
     if (options?.colorMode) {

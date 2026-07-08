@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -8,17 +9,43 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Search, Filter, ChevronRight } from "lucide-react"
+import { Search, Filter, ChevronRight, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getCustomerOrdersAction } from "@/lib/actions/customer-order.actions"
+import { formatCurrency, formatDateTime } from "@/lib/utils"
 
-const orders = [
-  { id: "ORD-A1B2C3", date: "Jan 15, 2025", pages: 10, amount: "₹20.00", status: "printing" },
-  { id: "ORD-D4E5F6", date: "Jan 14, 2025", pages: 50, amount: "₹100.00", status: "completed" },
-  { id: "ORD-G7H8I9", date: "Jan 12, 2025", pages: 25, amount: "₹50.00", status: "completed" },
-  { id: "ORD-J0K1L2", date: "Jan 10, 2025", pages: 5, amount: "₹10.00", status: "cancelled" },
-]
+interface OrderItem {
+  id: string
+  orderId: string
+  status: string
+  pages: number
+  total: number
+  createdAt: string
+  shopName: string | null
+}
 
 export default function CustomerOrdersPage() {
+  const [orders, setOrders] = useState<OrderItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+
+  const fetchData = useCallback(async () => {
+    const data = await getCustomerOrdersAction()
+    setOrders(data as unknown as OrderItem[])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  useEffect(() => {
+    const interval = setInterval(fetchData, 15000)
+    return () => clearInterval(interval)
+  }, [fetchData])
+
+  const filtered = orders.filter(
+    (o) => !search || o.orderId.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNavbar title="My Orders" type="customer" />
@@ -33,12 +60,12 @@ export default function CustomerOrdersPage() {
             >
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search orders..." className="pl-9" />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="h-4 w-4" /> Filter
-                </Button>
+                <Input
+                  placeholder="Search orders..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
             </motion.div>
 
@@ -52,36 +79,46 @@ export default function CustomerOrdersPage() {
                   <CardTitle>All Orders</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Pages</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-mono font-medium">{order.id}</TableCell>
-                          <TableCell>{order.date}</TableCell>
-                          <TableCell>{order.pages}</TableCell>
-                          <TableCell>{order.amount}</TableCell>
-                          <TableCell><StatusBadge status={order.status} /></TableCell>
-                          <TableCell>
-                            <Link href={`/customer/orders/${order.id}`}>
-                              <Button variant="ghost" size="icon">
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                          </TableCell>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <p className="font-medium">{search ? "No matching orders" : "No orders yet"}</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Order ID</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Pages</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-mono font-medium">{order.orderId}</TableCell>
+                            <TableCell>{formatDateTime(order.createdAt)}</TableCell>
+                            <TableCell>{order.pages}</TableCell>
+                            <TableCell>{formatCurrency(order.total)}</TableCell>
+                            <TableCell><StatusBadge status={order.status.toLowerCase()} /></TableCell>
+                            <TableCell>
+                              <Link href={`/customer/orders/${order.id}`}>
+                                <Button variant="ghost" size="icon">
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

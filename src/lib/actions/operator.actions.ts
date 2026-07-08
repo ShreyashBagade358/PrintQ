@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { printFile, cancelPrintJob, holdPrintJob, resumePrintJob } from "@/lib/print-service"
+import { createNotificationAction } from "./notification.actions"
 
 const operatorSettingsSchema = z.object({
   paperTray: z.string().optional(),
@@ -94,7 +95,7 @@ export async function startPrintWithSettingsAction(orderId: string, queueItemId:
     }),
   ])
 
-  const printerName = printer.name
+  const printerName = printer.name.trim()
 
   if (order.files.length > 0) {
     const printResults: string[] = []
@@ -185,6 +186,67 @@ export async function cancelOrderPrintJobAction(orderId: string) {
   revalidatePath(`/shop/orders/${orderId}`)
   revalidatePath("/shop/orders")
   revalidatePath("/shop/queue")
+
+  return { success: true }
+}
+
+export async function acceptPayLaterOrderAction(orderId: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { queueItems: true },
+  })
+  if (!order) return { error: "Order not found" }
+  if (order.status !== "RECEIVED") return { error: "Order is not in RECEIVED status" }
+
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop || order.shopId !== shop.id) return { error: "Unauthorized" }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: "IN_QUEUE",
+      estimatedReadyAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      printNotes: `${order.printNotes || ""}\n--- Payment received at shop on ${new Date().toLocaleString()} ---`.trim(),
+    },
+  })
+
+  await prisma.queueItem.create({
+    data: {
+      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
+      status: "QUEUED",
+      shopId: shop.id,
+      orderId: order.id,
+    },
+  })
+
+  const customer = await prisma.customer.findUnique({ where: { id: order.customerId } })
+  if (customer) {
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { totalOrders: { increment: 1 }, totalSpent: { increment: order.total } },
+    })
+  }
+
+  if (order.userId) {
+    await createNotificationAction(
+      order.userId,
+      "Payment Accepted",
+      `Your payment for order ${order.orderId} has been accepted. Your order is now in queue.`,
+      "PAYMENT",
+      `/customer/track?order=${order.orderId}`,
+      shop.id,
+    )
+  }
+
+  revalidatePath(`/shop/orders/${orderId}`)
+  revalidatePath("/shop/orders")
+  revalidatePath("/shop/queue")
+  revalidatePath("/shop/dashboard")
 
   return { success: true }
 }

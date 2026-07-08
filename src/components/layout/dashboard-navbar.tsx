@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useSession, signOut } from "next-auth/react"
+import { useState, useEffect, useCallback } from "react"
 import { Bell, Search, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { getUnreadNotificationCountAction } from "@/lib/actions/notification.actions"
 
 interface DashboardNavbarProps {
   title?: string
@@ -20,6 +23,20 @@ interface DashboardNavbarProps {
 }
 
 export function DashboardNavbar({ title = "Dashboard", type = "shop" }: DashboardNavbarProps) {
+  const { data: session } = useSession()
+  const user = session?.user
+  const initials = (user?.name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U"
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const fetchCount = useCallback(async () => {
+    const count = await getUnreadNotificationCountAction()
+    setUnreadCount(count)
+  }, [])
+
+  useEffect(() => { fetchCount() }, [fetchCount])
+
+  const notifPath = type === "admin" ? "/admin/notifications" : `/${type}/notifications`
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
       <Link href={`/${type}/dashboard`} className="flex items-center gap-2 lg:hidden">
@@ -39,37 +56,41 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
-            3
-          </span>
-        </Button>
+        <Link href={notifPath}>
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Button>
+        </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarFallback>SO</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span>Shop Owner</span>
-                <span className="text-xs text-muted-foreground">owner@printq.com</span>
+                <span>{user?.name || "User"}</span>
+                <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/shop/profile">Profile</Link>
+              <Link href={`/${type}/profile`}>Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/shop/settings">Settings</Link>
+              <Link href={`/${type}/settings`}>Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={() => signOut({ callbackUrl: "/" })}>
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

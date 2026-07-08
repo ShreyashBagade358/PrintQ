@@ -78,6 +78,16 @@ const sectionVariants = {
   }),
 }
 
+async function uploadWithTimeout(file: File): Promise<{ url: string } | undefined> {
+  const result = await Promise.race([
+    uploadFiles("documentUploader", { files: [file] }),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Upload timed out after 60s. Check your internet or file size.")), 60000)
+    ),
+  ])
+  return (result as { url: string }[])?.[0]
+}
+
 function CustomerUploadContent() {
   const [files, setFiles] = useState<SelectedFile[]>([])
   const [dragging, setDragging] = useState(false)
@@ -87,7 +97,10 @@ function CustomerUploadContent() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState(0)
+  const [showPaymentChoice, setShowPaymentChoice] = useState(false)
+  const [paymentChoiceLoading, setPaymentChoiceLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const originalFilesRef = useRef<Map<string, File>>(new Map())
   const pendingOrderRef = useRef<{
     formValues: FormValues
     uploadedFiles: SelectedFile[]
@@ -138,8 +151,10 @@ function CustomerUploadContent() {
         toast.error(`${f.name} is not a supported file type`)
         continue
       }
+      const id = Math.random().toString(36).substring(2)
+      originalFilesRef.current.set(id, f)
       valid.push({
-        id: Math.random().toString(36).substring(2),
+        id,
         name: f.name,
         size: f.size,
         type: f.type,
@@ -164,7 +179,12 @@ function CustomerUploadContent() {
     e.target.value = ""
   }
 
-  const removeFile = (id: string) => setFiles((prev) => prev.filter((f) => f.id !== id))
+  const removeFile = (id: string) => {
+    const file = files.find((f) => f.id === id)
+    if (file?.url.startsWith("blob:")) URL.revokeObjectURL(file.url)
+    originalFilesRef.current.delete(id)
+    setFiles((prev) => prev.filter((f) => f.id !== id))
+  }
 
   const totalPages = files.reduce((s, f) => s + f.pages, 0)
   const pricePerPage = values.color === "Color"
@@ -175,6 +195,28 @@ function CustomerUploadContent() {
   const finishingCost = finishingOptions.reduce((sum, opt) => sum + ((PRICING.finishing as Record<string, number>)[opt] || 0), 0) * values.copies
   const total = printCost + finishingCost
 
+  async function uploadSelectedFiles(selFiles: SelectedFile[]): Promise<SelectedFile[] | null> {
+    const uploaded: SelectedFile[] = []
+    for (const file of selFiles) {
+      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, uploadStatus: "uploading" } : f))
+      try {
+        const original = originalFilesRef.current.get(file.id)
+        if (!original) throw new Error("File reference lost. Please re-add the file.")
+        const result = await uploadWithTimeout(original)
+        if (!result?.url) throw new Error("Upload returned no URL")
+        uploaded.push({ ...file, url: result.url, uploadStatus: "done" })
+        setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, url: result.url, uploadStatus: "done" } : f))
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e)
+        uploaded.push({ ...file, uploadStatus: "error" })
+        setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, uploadStatus: "error" } : f))
+        toast.error(`${file.name}: ${msg}`)
+      }
+    }
+    const allDone = uploaded.every((f) => f.uploadStatus === "done")
+    return allDone ? uploaded : null
+  }
+
   const handleSubmit = async () => {
     if (!files.length) {
       toast.error("Please upload at least one file")
@@ -184,45 +226,31 @@ function CustomerUploadContent() {
     const formValid = await form.trigger()
     if (!formValid) return
 
-    const formValues = form.getValues()
     setUploading(true)
 
-    const uploadedFiles: SelectedFile[] = []
-    for (const file of files) {
-      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, uploadStatus: "uploading" } : f))
-      try {
-        const blob = await fetch(file.url).then((r) => r.blob())
-        const f = new File([blob], file.name, { type: file.type })
-        const [result] = await uploadFiles("documentUploader", { files: [f] })
-        if (!result) throw new Error("Upload failed")
-        uploadedFiles.push({ ...file, url: result.url, uploadStatus: "done" })
-        setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, url: result.url, uploadStatus: "done" } : f))
-      } catch {
-        uploadedFiles.push({ ...file, uploadStatus: "error" })
-        setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, uploadStatus: "error" } : f))
-        toast.error(`Failed to upload ${file.name}`)
+    const pendingFiles = files.filter((f) => f.uploadStatus !== "done")
+    const alreadyDone = files.filter((f) => f.uploadStatus === "done")
+    let allFiles: SelectedFile[] = [...alreadyDone]
+
+    if (pendingFiles.length > 0) {
+      const result = await uploadSelectedFiles(pendingFiles)
+      if (!result) {
+        setUploading(false)
+        toast.error("Some files failed to upload. Please check and try again.")
+        return
       }
+      allFiles = [...allFiles, ...result]
     }
 
-    const allDone = uploadedFiles.every((f) => f.uploadStatus === "done")
-    if (!allDone) {
-      setUploading(false)
-      toast.error("Some files failed to upload. Please try again.")
-      return
-    }
-
-    pendingOrderRef.current = { formValues, uploadedFiles, totalPages, connectedShopId: connectedShop?.id }
-
-    const paymentResult = await createPaymentIntentAction(total)
     setUploading(false)
-    if (paymentResult.error) {
-      toast.error(paymentResult.error)
-      return
+    pendingOrderRef.current = {
+      formValues: form.getValues(),
+      uploadedFiles: allFiles,
+      totalPages,
+      connectedShopId: connectedShop?.id,
     }
-
     setPaymentAmount(total)
-    setClientSecret(paymentResult.clientSecret!)
-    setPaymentDialogOpen(true)
+    setShowPaymentChoice(true)
   }
 
   const handlePaymentSuccess = async () => {
@@ -268,6 +296,69 @@ function CustomerUploadContent() {
     } else {
       toast.error(result.error || "Order creation failed after payment. Please contact support.")
     }
+  }
+
+  const handlePayLater = async () => {
+    const data = pendingOrderRef.current
+    if (!data) return
+
+    setPaymentChoiceLoading(true)
+    const { formValues, uploadedFiles, totalPages, connectedShopId } = data
+
+    const formData = new FormData()
+    formData.set("data", JSON.stringify({
+      shopId: connectedShopId,
+      customerName: formValues.customerName,
+      customerEmail: formValues.customerEmail,
+      customerPhone: formValues.customerPhone || undefined,
+      pages: totalPages,
+      copies: formValues.copies,
+      color: formValues.color,
+      paperSize: formValues.paperSize,
+      sides: formValues.sides,
+      orientation: formValues.orientation,
+      printQuality: formValues.printQuality,
+      pageRange: formValues.pageRange,
+      customPageRange: formValues.pageRange === "custom" ? formValues.customPageRange : undefined,
+      finishingOptions: formValues.finishingOptions,
+      paymentMethod: "pay_later",
+      notes: formValues.notes || undefined,
+      files: uploadedFiles.map((f) => ({
+        name: f.name,
+        url: f.url,
+        size: f.size,
+        type: f.type,
+        pages: f.pages,
+      })),
+    }))
+
+    const result = await createCustomerOrderAction(null, formData)
+    setPaymentChoiceLoading(false)
+    setShowPaymentChoice(false)
+
+    if (result.success) {
+      toast.success("Order placed! Awaiting payment confirmation from the shop.")
+      router.push(`/customer/track?order=${result.orderId}`)
+    } else {
+      toast.error(result.error || "Failed to create order. Please try again.")
+    }
+  }
+
+  const handlePayNow = async () => {
+    const data = pendingOrderRef.current
+    if (!data) return
+
+    setPaymentChoiceLoading(true)
+    const paymentResult = await createPaymentIntentAction(paymentAmount)
+    setPaymentChoiceLoading(false)
+    if (paymentResult.error) {
+      toast.error(paymentResult.error)
+      return
+    }
+
+    setClientSecret(paymentResult.clientSecret!)
+    setShowPaymentChoice(false)
+    setPaymentDialogOpen(true)
   }
 
   const finishingCheckboxes = [
@@ -671,6 +762,50 @@ function CustomerUploadContent() {
           </div>
         </main>
       </div>
+
+      <Dialog open={showPaymentChoice} onOpenChange={(o) => { if (!o) { setShowPaymentChoice(false) } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" /> Choose Payment Method
+            </DialogTitle>
+            <DialogDescription>
+              Total amount: {formatCurrency(paymentAmount)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-xl bg-muted/40 p-5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Print Cost</span>
+                <span>{formatCurrency(paymentAmount)}</span>
+              </div>
+              <div className="border-t pt-2 flex justify-between items-baseline">
+                <span className="font-semibold">Total</span>
+                <span className="text-xl font-bold text-primary">{formatCurrency(paymentAmount)}</span>
+              </div>
+            </div>
+            <Button
+              className="w-full gap-2 h-12 text-base"
+              onClick={handlePayNow}
+              disabled={paymentChoiceLoading}
+              loading={paymentChoiceLoading}
+            >
+              <CreditCard className="h-5 w-5" /> Pay Now with Card
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full gap-2 h-12 text-base"
+              onClick={handlePayLater}
+              disabled={paymentChoiceLoading}
+            >
+              Pay Later at Shop
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Pay later: settle the payment when you pick up your prints at the shop.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={paymentDialogOpen} onOpenChange={(o) => { if (!o) { setPaymentDialogOpen(false); setClientSecret(null) } }}>
         <DialogContent className="sm:max-w-md">

@@ -75,3 +75,20 @@ export function debounce<T extends (...args: unknown[]) => unknown>(fn: T, ms: n
 export function cnx(...classes: (string | boolean | undefined | null)[]): string {
   return classes.filter(Boolean).join(" ")
 }
+
+export function timeAgo(date: Date | string): string {
+  const now = new Date()
+  const d = typeof date === "string" ? new Date(date) : date
+  const diffMs = now.getTime() - d.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 60) return "just now"
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin} min ago`
+  const diffHour = Math.floor(diffMin / 60)
+  if (diffHour < 24) return `${diffHour}h ago`
+  const diffDay = Math.floor(diffHour / 24)
+  if (diffDay < 30) return `${diffDay}d ago`
+  const diffMonth = Math.floor(diffDay / 30)
+  if (diffMonth < 12) return `${diffMonth}mo ago`
+  return formatDate(d)
+}

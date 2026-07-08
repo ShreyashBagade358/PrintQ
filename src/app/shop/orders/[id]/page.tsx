@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -21,6 +21,7 @@ import {
   saveOperatorSettingsAction,
   startPrintWithSettingsAction,
   cancelOrderPrintJobAction,
+  acceptPayLaterOrderAction,
   reprintOrderAction,
 } from "@/lib/actions/operator.actions"
 import { toast } from "sonner"
@@ -103,7 +104,8 @@ const sectionVariants = {
   }),
 }
 
-export default function OperatorOrderDetailPage({ params }: { params: { id: string } }) {
+export default function OperatorOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [order, setOrder] = useState<OrderDetail | null>(null)
   const [printers, setPrinters] = useState<PrinterType[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,7 +131,7 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
 
   const fetchData = useCallback(async () => {
     const [orderData, printersData] = await Promise.all([
-      getShopOrderDetailAction(params.id),
+      getShopOrderDetailAction(id),
       getPrintersAction(),
     ])
     const o = orderData as unknown as OrderDetail | null
@@ -151,7 +153,7 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
       setContrast((op.contrast as number) || 0)
     }
     setLoading(false)
-  }, [params.id])
+  }, [id])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -163,7 +165,7 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
       scaling, autoRotate, colorMode, dpi, margins,
       brightness, contrast,
     }))
-    const result = await saveOperatorSettingsAction(params.id, null, formData)
+    const result = await saveOperatorSettingsAction(id, null, formData)
     setSavingSettings(false)
     if (result.success) {
       toast.success("Print settings saved")
@@ -234,6 +236,13 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
     else { toast.error(result.error || "Failed") }
   }
 
+  const handleAcceptPayment = async () => {
+    if (!order) return
+    const result = await acceptPayLaterOrderAction(order.id)
+    if (result.success) { toast.success("Payment accepted! Order added to queue."); fetchData() }
+    else { toast.error(result.error || "Failed") }
+  }
+
   const handlePriorityChange = async (priority: string) => {
     if (!order) return
     const qi = order.queueItems.find((qi) => ["QUEUED", "PRINTING"].includes(qi.status))
@@ -242,8 +251,9 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
     if (result.success) { toast.success("Priority updated"); fetchData() }
   }
 
-  const availablePrinters = printers.filter((p) => p.status === "ONLINE" || p.status === "online")
+  const availablePrinters = printers
   const activeQueueItem = order?.queueItems.find((qi) => ["QUEUED", "PRINTING"].includes(qi.status))
+  const isReceived = order?.status === "RECEIVED"
   const isQueued = activeQueueItem?.status === "QUEUED"
   const isPrinting = activeQueueItem?.status === "PRINTING"
   const isQualityCheck = order?.status === "QUALITY_CHECK"
@@ -322,6 +332,12 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
                     <SelectItem value="URGENT">Urgent</SelectItem>
                   </SelectContent>
                 </Select>
+              )}
+
+              {isReceived && (
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={handleAcceptPayment}>
+                  <CheckCircle className="h-4 w-4" /> Mark as Paid &amp; Queue
+                </Button>
               )}
 
               {isQueued && !showPrinterSelect && (
@@ -838,7 +854,7 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
       </div>
 
       <Dialog open={!!previewFile} onOpenChange={(o) => { if (!o) setPreviewFile(null) }}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className={previewFile?.type?.includes("pdf") ? "sm:max-w-4xl" : "sm:max-w-2xl"}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {previewFile?.type?.includes("image") ? <ImageIcon className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-primary" />}
@@ -846,20 +862,51 @@ export default function OperatorOrderDetailPage({ params }: { params: { id: stri
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {previewFile?.type?.includes("image") ? (
-              <div className="flex items-center justify-center rounded-lg border bg-muted/30 p-4">
-                <img src={previewFile.url} alt={previewFile.name} className="max-h-[400px] max-w-full rounded-lg object-contain shadow-sm" />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
-                <FileText className="h-20 w-20 text-primary/40 mb-4" />
-                <p className="text-lg font-medium">Document Preview</p>
-                <p className="text-sm text-muted-foreground mt-1">{previewFile?.name}</p>
-                <a href={previewFile?.url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="default" size="sm" className="mt-4">Open Document</Button>
-                </a>
-              </div>
-            )}
+            {(() => {
+              const type = previewFile?.type || ""
+              const name = previewFile?.name || ""
+              const isImage = type.includes("image") || /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(name)
+              const isPdf = type.includes("pdf") || name.toLowerCase().endsWith(".pdf")
+
+              if (isImage) {
+                return (
+                  <div className="flex items-center justify-center rounded-lg border bg-muted/30 p-4">
+                    <img src={previewFile!.url} alt={previewFile!.name} className="max-h-[400px] max-w-full rounded-lg object-contain shadow-sm" />
+                  </div>
+                )
+              }
+
+              if (isPdf) {
+                return (
+                  <div className="rounded-lg border bg-muted/30 overflow-hidden">
+                    <iframe
+                      src={previewFile!.url}
+                      className="w-full h-[600px]"
+                      title={previewFile!.name}
+                    />
+                    <div className="flex justify-center gap-3 p-3 border-t bg-background">
+                      <a href={previewFile!.url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="default" size="sm">Open in New Tab</Button>
+                      </a>
+                      <a href={previewFile!.url} download={previewFile!.name} rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">Download</Button>
+                      </a>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
+                  <FileText className="h-20 w-20 text-primary/40 mb-4" />
+                  <p className="text-lg font-medium">Document Preview</p>
+                  <p className="text-sm text-muted-foreground mt-1">{previewFile?.name}</p>
+                  <a href={previewFile?.url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="default" size="sm" className="mt-4">Open Document</Button>
+                  </a>
+                </div>
+              )
+            })()}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-muted-foreground text-xs">File size</p>
