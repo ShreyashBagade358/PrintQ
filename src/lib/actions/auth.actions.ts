@@ -74,77 +74,143 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
 }
 
 export async function registerAction(_prevState: unknown, formData: FormData) {
-  const validated = registerSchema.safeParse({
-    shopName: formData.get("shopName"),
-    shopSlug: formData.get("shopSlug"),
-    address: formData.get("address"),
-    city: formData.get("city"),
-    state: formData.get("state"),
-    pinCode: formData.get("pinCode"),
-    shopPhone: formData.get("shopPhone"),
-    name: formData.get("name"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
-  })
-
-  if (!validated.success) {
-    return { error: validated.error.errors[0].message }
-  }
-
-  const { shopName, shopSlug, address, city, state, pinCode, shopPhone, name, email, phone, password } = validated.data
-
-  const existingUser = await prisma.user.findUnique({ where: { email } })
-  if (existingUser) {
-    return { error: "Email already registered" }
-  }
-
-  const existingShop = await prisma.shop.findUnique({ where: { slug: shopSlug } })
-  if (existingShop) {
-    return { error: "Shop slug already taken" }
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12)
-
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      phone,
-      password: hashedPassword,
-      role: "SHOP_OWNER",
-      emailVerified: new Date(),
-    },
-  })
-
-  await prisma.shop.create({
-    data: {
-      name: shopName,
-      slug: shopSlug,
-      address,
-      city,
-      state,
-      pinCode,
-      phone: shopPhone,
-      email,
-      ownerId: user.id,
-      status: "ACTIVE",
-    },
-  })
-
   try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    const validated = registerSchema.safeParse({
+      shopName: formData.get("shopName"),
+      shopSlug: formData.get("shopSlug"),
+      address: formData.get("address"),
+      city: formData.get("city"),
+      state: formData.get("state"),
+      pinCode: formData.get("pinCode"),
+      shopPhone: formData.get("shopPhone"),
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
     })
+
+    if (!validated.success) {
+      return { error: validated.error.errors[0].message }
+    }
+
+    const { shopName, shopSlug, address, city, state, pinCode, shopPhone, name, email, phone, password } = validated.data
+
+    const existingUser = await prisma.user.findUnique({ where: { email } })
+    if (existingUser) {
+      return { error: "Email already registered" }
+    }
+
+    const existingShop = await prisma.shop.findUnique({ where: { slug: shopSlug } })
+    if (existingShop) {
+      return { error: "Shop slug already taken" }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        role: "SHOP_OWNER",
+        emailVerified: new Date(),
+      },
+    })
+
+    await prisma.shop.create({
+      data: {
+        name: shopName,
+        slug: shopSlug,
+        address,
+        city,
+        state,
+        pinCode,
+        phone: shopPhone,
+        email,
+        ownerId: user.id,
+        status: "ACTIVE",
+      },
+    })
+
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+    } catch {
+      // signIn may fail if session isn't ready; redirect anyway
+    }
     return { success: true, redirect: "/shop/dashboard" }
-  } catch {
-    return { success: true, redirect: "/shop/dashboard" }
+  } catch (e) {
+    console.error("Registration error:", e)
+    return { error: e instanceof Error ? e.message : "Registration failed. Please try again." }
   }
 }
 
 export async function loginWithGoogle() {
   await signIn("google", { redirectTo: "/auth/login" })
+}
+
+const customerRegisterSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})
+
+export async function customerRegisterAction(_prevState: unknown, formData: FormData) {
+  try {
+    const validated = customerRegisterSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email"),
+      phone: formData.get("phone"),
+      password: formData.get("password"),
+      confirmPassword: formData.get("confirmPassword"),
+    })
+
+    if (!validated.success) {
+      return { error: validated.error.errors[0].message }
+    }
+
+    const { name, email, phone, password } = validated.data
+
+    const existingUser = await prisma.user.findUnique({ where: { email } })
+    if (existingUser) {
+      return { error: "Email already registered" }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        role: "CUSTOMER",
+        emailVerified: new Date(),
+      },
+    })
+
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+    } catch {
+      // signIn may fail if session isn't ready; redirect anyway
+    }
+    return { success: true, redirect: "/customer/dashboard" }
+  } catch (e) {
+    console.error("Customer registration error:", e)
+    return { error: e instanceof Error ? e.message : "Registration failed. Please try again." }
+  }
 }

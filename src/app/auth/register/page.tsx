@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useActionState } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +14,7 @@ import { toast } from "sonner"
 export default function RegisterPage() {
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
+  const [pending, setPending] = useState(false)
   const [shopName, setShopName] = useState("")
   const [shopSlug, setShopSlug] = useState("")
   const [address, setAddress] = useState("")
@@ -24,19 +24,18 @@ export default function RegisterPage() {
   const [shopPhone, setShopPhone] = useState("")
   const router = useRouter()
 
-  const [formState, formAction, pending] = useActionState(registerAction, undefined)
-
-  useEffect(() => {
-    if (formState?.success) {
-      router.push(formState.redirect || "/shop/dashboard")
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    const formData = new FormData(e.currentTarget)
+    const result = await registerAction(undefined, formData)
+    setPending(false)
+    if (result.success) {
+      router.push(result.redirect || "/shop/dashboard")
+    } else {
+      toast.error(result.error || "Registration failed")
     }
-  }, [formState?.success, formState?.redirect, router])
-
-  useEffect(() => {
-    if (formState?.error) {
-      toast.error(formState.error)
-    }
-  }, [formState?.error])
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -87,7 +86,7 @@ export default function RegisterPage() {
             }`}>2</div>
           </div>
 
-          <form action={formAction}>
+          <form onSubmit={handleSubmit}>
             <AnimatePresence mode="wait">
               {step === 1 ? (
                 <motion.div
@@ -103,7 +102,7 @@ export default function RegisterPage() {
                   </div>
 
                   <Input label="Shop Name" name="shopName" placeholder="e.g. PrintPro Delhi" value={shopName} onChange={(e) => setShopName(e.target.value)} required />
-                  <Input label="Shop URL" name="shopSlug" placeholder="e.g. printpro-delhi" value={shopSlug} onChange={(e) => setShopSlug(e.target.value)} required />
+                  <Input label="Shop URL" name="shopSlug" placeholder="e.g. printpro-delhi" value={shopSlug} onChange={(e) => setShopSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))} required />
                   <Input label="Address" name="address" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} required />
                   <div className="grid grid-cols-2 gap-4">
                     <Input label="City" name="city" placeholder="Delhi" value={city} onChange={(e) => setCity(e.target.value)} required />

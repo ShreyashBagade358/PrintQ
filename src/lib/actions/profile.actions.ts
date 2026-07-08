@@ -73,14 +73,27 @@ export async function changePasswordAction(_prevState: unknown, formData: FormDa
 
 export async function getCustomerDashboardAction() {
   const session = await auth()
-  if (!session?.user || session.user.role !== "CUSTOMER") return null
+  if (!session?.user) return null
 
-  const customer = await prisma.customer.findFirst({
+  let customer = await prisma.customer.findFirst({
     where: { userId: session.user.id },
   })
+
+  if (!customer && session.user.email) {
+    customer = await prisma.customer.findFirst({
+      where: { email: session.user.email },
+    })
+    if (customer && !customer.userId) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { userId: session.user.id },
+      })
+    }
+  }
+
   if (!customer) return { stats: { totalOrders: 0, pagesPrinted: 0, totalSpent: 0, activeOrders: 0 }, recentOrders: [] }
 
-  const [orders, activeOrders, totalPages] = await Promise.all([
+  const [orders, activeOrders, totalPages, totalSpent, totalOrders] = await Promise.all([
     prisma.order.findMany({
       where: { customerId: customer.id },
       include: { shop: { select: { name: true } } },
@@ -94,13 +107,20 @@ export async function getCustomerDashboardAction() {
       where: { customerId: customer.id },
       _sum: { pages: true },
     }),
+    prisma.order.aggregate({
+      where: { customerId: customer.id },
+      _sum: { total: true },
+    }),
+    prisma.order.count({
+      where: { customerId: customer.id },
+    }),
   ])
 
   return {
     stats: {
-      totalOrders: customer.totalOrders,
+      totalOrders,
       pagesPrinted: totalPages._sum.pages ?? 0,
-      totalSpent: customer.totalSpent,
+      totalSpent: totalSpent._sum.total ?? 0,
       activeOrders,
     },
     recentOrders: orders,
