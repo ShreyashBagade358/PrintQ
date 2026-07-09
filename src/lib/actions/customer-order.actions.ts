@@ -244,3 +244,77 @@ export async function getCustomerOrdersAction() {
     shopName: o.shop?.name || null,
   }))
 }
+
+export async function getCustomerOrderDetailAction(id: string) {
+  const session = await auth()
+  if (!session?.user) return null
+
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: {
+      shop: { select: { name: true } },
+      customer: true,
+      files: true,
+      queueItems: {
+        include: { printer: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  })
+
+  if (!order) return null
+
+  const customer = await prisma.customer.findFirst({
+    where: { userId: session.user.id },
+  })
+  if (!customer && session.user.email) {
+    const c = await prisma.customer.findFirst({
+      where: { email: session.user.email },
+    })
+    if (c && !c.userId) {
+      await prisma.customer.update({
+        where: { id: c.id },
+        data: { userId: session.user.id },
+      })
+    }
+  }
+
+  if (order.customerId !== customer?.id && order.customer?.email !== session.user.email) {
+    return null
+  }
+
+  return {
+    id: order.id,
+    orderId: order.orderId,
+    status: order.status,
+    pages: order.pages,
+    copies: order.copies,
+    color: order.color,
+    paperSize: order.paperSize,
+    sides: order.sides,
+    finishing: order.finishing,
+    amount: order.amount,
+    discount: order.discount,
+    total: order.total,
+    notes: order.notes,
+    printSettings: order.printSettings as Record<string, unknown> | null,
+    estimatedReadyAt: order.estimatedReadyAt?.toISOString() || null,
+    completedAt: order.completedAt?.toISOString() || null,
+    createdAt: order.createdAt.toISOString(),
+    shopName: order.shop?.name || null,
+    customer: order.customer
+      ? { name: order.customer.name, email: order.customer.email, phone: order.customer.phone }
+      : null,
+    files: order.files.map((f) => ({
+      id: f.id, name: f.name, url: f.url, size: f.size, pages: f.pages, type: f.type,
+    })),
+    queueItems: order.queueItems.map((qi) => ({
+      id: qi.id,
+      status: qi.status,
+      startedAt: qi.startedAt?.toISOString() || null,
+      completedAt: qi.completedAt?.toISOString() || null,
+      createdAt: qi.createdAt.toISOString(),
+      printer: qi.printer ? { id: qi.printer.id, name: qi.printer.name } : null,
+    })),
+  }
+}
