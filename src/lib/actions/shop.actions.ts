@@ -77,6 +77,7 @@ export async function inviteStaffAction(_prevState: unknown, formData: FormData)
 
   const email = formData.get("email") as string
   const name = formData.get("name") as string
+  const role = (formData.get("role") as string) || "staff"
 
   if (!email || !name) return { error: "Email and name are required" }
 
@@ -96,13 +97,41 @@ export async function inviteStaffAction(_prevState: unknown, formData: FormData)
     data: {
       userId: user.id,
       shopId: shop.id,
-      role: "staff",
+      role,
       permissions: ["view_orders", "update_orders"],
       status: "ACTIVE",
     },
   })
 
   revalidatePath("/shop/staff")
+  return { success: true }
+}
+
+export async function createCustomerAction(_prevState: unknown, formData: FormData) {
+  const session = await auth()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop) return { error: "No shop found" }
+
+  const name = formData.get("name") as string
+  const email = formData.get("email") as string
+  const phone = formData.get("phone") as string
+
+  if (!name || !email) return { error: "Name and email are required" }
+
+  const existing = await prisma.customer.findUnique({
+    where: { email_shopId: { email, shopId: shop.id } },
+  })
+  if (existing) return { error: "Customer with this email already exists" }
+
+  await prisma.customer.create({
+    data: { name, email, phone, shopId: shop.id },
+  })
+
+  revalidatePath("/shop/customers")
   return { success: true }
 }
 

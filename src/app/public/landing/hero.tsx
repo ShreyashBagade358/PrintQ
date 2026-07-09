@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Play } from "lucide-react"
 import Link from "next/link"
+import { DemoModal } from "./demo-modal"
 
 export function LandingHero() {
+  const [demoOpen, setDemoOpen] = useState(false)
   return (
     <section className="relative overflow-hidden px-4 py-20 lg:py-32">
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
@@ -72,21 +75,24 @@ export function LandingHero() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-16"
           >
-            <div className="mx-auto max-w-4xl rounded-2xl border bg-gradient-to-b from-background to-muted/30 p-2 shadow-2xl">
-              <div className="rounded-xl bg-white p-4">
-                <div className="aspect-video rounded-lg bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 backdrop-blur-sm">
-                      <Play className="h-8 w-8 text-primary" />
+            <button onClick={() => setDemoOpen(true)} className="w-full text-left">
+              <div className="mx-auto max-w-4xl rounded-2xl border bg-gradient-to-b from-background to-muted/30 p-2 shadow-2xl hover:shadow-3xl transition-shadow">
+                <div className="rounded-xl bg-white p-4">
+                  <div className="aspect-video rounded-lg bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center cursor-pointer group">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 backdrop-blur-sm group-hover:bg-primary/30 group-hover:scale-110 transition-all">
+                        <Play className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">Watch how PrintQ works</p>
                     </div>
-                    <p className="text-sm font-medium text-muted-foreground">Watch how PrintQ works</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           </motion.div>
         </div>
       </div>
+      <DemoModal open={demoOpen} onClose={() => setDemoOpen(false)} />
     </section>
   )
 }
