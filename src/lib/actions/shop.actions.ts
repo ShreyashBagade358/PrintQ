@@ -158,3 +158,23 @@ export async function getQueueAction() {
     orderBy: [{ priority: "desc" }, { position: "asc" }],
   })
 }
+
+export async function getShopProfileStatsAction() {
+  const session = await auth()
+  if (!session?.user) return null
+
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop) return null
+
+  const [totalOrders, totalSpent] = await Promise.all([
+    prisma.order.count({ where: { shopId: shop.id } }),
+    prisma.order.aggregate({ where: { shopId: shop.id }, _sum: { total: true } }),
+  ])
+
+  return {
+    totalOrders,
+    totalSpent: totalSpent._sum.total ?? 0,
+  }
+}

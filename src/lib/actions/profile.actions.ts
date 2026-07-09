@@ -21,7 +21,7 @@ export async function getProfileAction() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, phone: true, image: true, role: true },
+    select: { id: true, name: true, email: true, phone: true, image: true, role: true, createdAt: true },
   })
   if (!user) return { error: "User not found" }
 
