@@ -38,8 +38,9 @@ export function QrDisplay() {
 
   useEffect(() => {
     if (!data?.qrToken) return
+    const scanUrl = `${window.location.origin}/scan/${data.qrToken}`
     import("qrcode").then((qr) => {
-      qr.toDataURL(data.qrToken, {
+      qr.toDataURL(scanUrl, {
         width: 400,
         margin: 2,
         color: { dark: "#1a1a2e", light: "#ffffff" },

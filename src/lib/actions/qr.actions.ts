@@ -67,3 +67,19 @@ export async function verifyShopQrAction(token: string) {
 
   return { valid: true, shop }
 }
+
+export async function recordScanAction(shopId: string, token: string) {
+  const session = await auth()
+  try {
+    await prisma.scanEvent.create({
+      data: {
+        shopId,
+        userId: session?.user?.id || null,
+        token,
+        metadata: session?.user ? undefined : { anonymous: true },
+      },
+    })
+  } catch {
+    // Non-critical — don't block the scan flow
+  }
+}

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { auth } from "@/lib/auth"
-import { verifyShopQrAction } from "@/lib/actions/qr.actions"
+import { verifyShopQrAction, recordScanAction } from "@/lib/actions/qr.actions"
 import { AlertCircle, Store, ArrowLeft, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -61,6 +61,8 @@ export default async function ScanTokenPage({ params }: Props) {
       </div>
     )
   }
+
+  recordScanAction(shop.id, token)
 
   const uploadUrl = `/customer/upload?connectedShop=${shop.id}&shopName=${encodeURIComponent(shop.name)}`
   redirect(uploadUrl)

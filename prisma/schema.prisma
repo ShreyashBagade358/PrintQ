@@ -545,6 +545,20 @@ model ActivityLog {
   @@index([createdAt])
 }
 
+model ScanEvent {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String?
+  token     String
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model Setting {
   id    String @id @default(cuid())
   key   String @unique
