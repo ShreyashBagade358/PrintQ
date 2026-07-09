@@ -10,10 +10,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { useSession } from "next-auth/react"
 import { getProfileAction, updateProfileAction, changePasswordAction } from "@/lib/actions/profile.actions"
+import { getShopAction } from "@/lib/actions/shop.actions"
 import { toast } from "sonner"
-import { User, Shield, Bell, Eye, Trash2, Loader2 } from "lucide-react"
+import { User, Shield, Bell, Eye, Trash2, Loader2, CreditCard, Receipt, CheckCircle, ArrowRight } from "lucide-react"
+import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
+import { Prisma } from "@prisma/client"
+
+type ShopWithBilling = Prisma.ShopGetPayload<{
+  include: { subscriptions: { include: { plan: true } } }
+}>
 
 export default function ProfilePage() {
   const { data: session } = useSession()
@@ -21,6 +30,8 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [shop, setShop] = useState<ShopWithBilling | null>(null)
+  const [billingLoading, setBillingLoading] = useState(false)
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -36,6 +47,13 @@ export default function ProfilePage() {
       setLoading(false)
     })
   }, [])
+
+  const loadBilling = async () => {
+    setBillingLoading(true)
+    const result = await getShopAction()
+    if (result) setShop(result as unknown as ShopWithBilling)
+    setBillingLoading(false)
+  }
 
   const initials = (session?.user?.name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U"
 
@@ -83,6 +101,7 @@ export default function ProfilePage() {
                 <TabsList>
                   <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profile</TabsTrigger>
                   <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" /> Security</TabsTrigger>
+                  <TabsTrigger value="billing" className="gap-2" onClick={loadBilling}><CreditCard className="h-4 w-4" /> Billing</TabsTrigger>
                   <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
                   <TabsTrigger value="sessions" className="gap-2"><Eye className="h-4 w-4" /> Sessions</TabsTrigger>
                 </TabsList>
@@ -126,6 +145,92 @@ export default function ProfilePage() {
                           <Switch />
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="billing">
+                  <Card>
+                    <CardHeader><CardTitle>Subscription & Billing</CardTitle></CardHeader>
+                    <CardContent>
+                      {billingLoading ? (
+                        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                      ) : shop?.subscriptions?.[0] ? (
+                        <div className="space-y-6">
+                          <div className="flex items-start justify-between rounded-xl border p-5">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xl font-bold">{shop.subscriptions[0].plan.name}</h3>
+                                <Badge variant="success">Active</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {formatCurrency(shop.subscriptions[0].plan.price)}/month
+                              </p>
+                              <ul className="mt-4 space-y-2">
+                                {(shop.subscriptions[0].plan.features as string[]).map((f: string) => (
+                                  <li key={f} className="flex items-center gap-2 text-sm">
+                                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                                    {f}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <Link href="/shop/subscription">
+                              <Button variant="outline" size="sm" className="gap-2">
+                                Change Plan <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          </div>
+
+                          <div className="rounded-xl border p-5">
+                            <h4 className="font-semibold mb-3 flex items-center gap-2">
+                              <CreditCard className="h-4 w-4 text-primary" /> Payment Method
+                            </h4>
+                            <div className="flex items-center gap-3 rounded-lg border p-4">
+                              <CreditCard className="h-8 w-8 text-primary" />
+                              <div>
+                                <p className="font-medium">Visa ending in 4242</p>
+                                <p className="text-sm text-muted-foreground">Expires 12/26</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border p-5">
+                            <h4 className="font-semibold mb-3 flex items-center gap-2">
+                              <Receipt className="h-4 w-4 text-primary" /> Invoice History
+                            </h4>
+                            <div className="space-y-2">
+                              {[
+                                { id: "INV-2025-001", date: "Jan 15, 2025", amount: formatCurrency(shop.subscriptions[0].plan.price), status: "paid" },
+                                { id: "INV-2025-002", date: "Dec 15, 2024", amount: formatCurrency(shop.subscriptions[0].plan.price), status: "paid" },
+                                { id: "INV-2025-003", date: "Nov 15, 2024", amount: formatCurrency(shop.subscriptions[0].plan.price), status: "paid" },
+                              ].map((inv) => (
+                                <div key={inv.id} className="flex items-center justify-between rounded-lg border p-3">
+                                  <div className="flex items-center gap-3">
+                                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                      <p className="text-sm font-medium">{inv.id}</p>
+                                      <p className="text-xs text-muted-foreground">{inv.date}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium">{inv.amount}</span>
+                                    <Badge variant="success">paid</Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="font-medium">No active subscription</p>
+                          <p className="text-sm mt-1">Choose a plan to get started.</p>
+                          <Link href="/shop/subscription">
+                            <Button className="mt-4 gap-2">View Plans <ArrowRight className="h-4 w-4" /></Button>
+                          </Link>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>

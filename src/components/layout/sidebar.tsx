@@ -37,8 +37,6 @@ const shopLinks = [
   { href: "/shop/printers", label: "Printers", icon: Printer },
   { href: "/shop/pricing", label: "Pricing", icon: DollarSign },
   { href: "/shop/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/shop/billing", label: "Billing", icon: Receipt },
-  { href: "/shop/subscription", label: "Subscription", icon: CreditCard },
   { href: "/shop/staff", label: "Staff", icon: UserCog },
   { href: "/shop/notifications", label: "Notifications", icon: Bell },
   { href: "/shop/reports", label: "Reports", icon: FileText },
