@@ -64,6 +64,7 @@ export default async function ScanTokenPage({ params }: Props) {
 
   recordScanAction(shop.id, token)
 
-  const uploadUrl = `/customer/upload?connectedShop=${shop.id}&shopName=${encodeURIComponent(shop.name)}`
+  // Store connection so the dashboard can show "Connected to X shop"
+  const uploadUrl = `/customer/upload?connectedShop=${shop.id}&shopName=${encodeURIComponent(shop.name)}&fromScan=true`
   redirect(uploadUrl)
 }
