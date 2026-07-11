@@ -92,6 +92,15 @@ export default function ProfilePage() {
   const [smsNotifications, setSmsNotifications] = useState(true)
   const [pushNotifications, setPushNotifications] = useState(true)
 
+  function getBrowser() {
+    const ua = navigator.userAgent
+    if (ua.includes("Chrome")) return "Chrome"
+    if (ua.includes("Firefox")) return "Firefox"
+    if (ua.includes("Safari")) return "Safari"
+    if (ua.includes("Edge")) return "Edge"
+    return "Browser"
+  }
+
   useEffect(() => {
     const savedSessions = localStorage.getItem("shop-sessions")
     if (savedSessions) {
@@ -145,15 +154,6 @@ export default function ProfilePage() {
       special: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
     })
   }, [newPassword])
-
-  function getBrowser() {
-    const ua = navigator.userAgent
-    if (ua.includes("Chrome")) return "Chrome"
-    if (ua.includes("Firefox")) return "Firefox"
-    if (ua.includes("Safari")) return "Safari"
-    if (ua.includes("Edge")) return "Edge"
-    return "Browser"
-  }
 
   const initials = (session?.user?.name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U"
 
