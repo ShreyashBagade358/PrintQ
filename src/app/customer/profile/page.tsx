@@ -8,16 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
 import { useSession } from "next-auth/react"
 import { getProfileAction, updateProfileAction, changePasswordAction } from "@/lib/actions/profile.actions"
 import { getCustomerDashboardAction } from "@/lib/actions/profile.actions"
 import { toast } from "sonner"
 import {
-  User, Shield, Bell, Trash2, Loader2, Package, CreditCard, FileText, CheckCircle,
-  Key, Smartphone, Globe, Eye,
+  Shield, Bell, Trash2, Loader2, Package, CreditCard, FileText, CheckCircle,
+  Key, Eye, EyeOff, Mail,
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import {
@@ -30,6 +28,28 @@ interface CustomerStats {
   pagesPrinted: number
   totalSpent: number
   activeOrders: number
+}
+
+function PasswordInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div className="relative">
+      <Input
+        label={label}
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground mt-4"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  )
 }
 
 export default function CustomerProfilePage() {
@@ -146,18 +166,23 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F8FAFC]">
       <DashboardNavbar title="Profile" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <main className="flex-1 p-8 ml-16 lg:ml-64">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto">
             {loading ? (
               <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
             ) : (
               <>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                  <Card>
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Manage your personal information and account settings.</p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                  <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-primary/10 text-primary">
                         <Package className="h-5 w-5" />
@@ -168,7 +193,7 @@ export default function CustomerProfilePage() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-amber-100 text-amber-600">
                         <Eye className="h-5 w-5" />
@@ -179,7 +204,7 @@ export default function CustomerProfilePage() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
                         <CreditCard className="h-5 w-5" />
@@ -190,7 +215,7 @@ export default function CustomerProfilePage() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
                         <FileText className="h-5 w-5" />
@@ -203,147 +228,132 @@ export default function CustomerProfilePage() {
                   </Card>
                 </div>
 
-                <Tabs defaultValue="profile">
-                  <TabsList>
-                    <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profile</TabsTrigger>
-                    <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" /> Security</TabsTrigger>
-                    <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="profile" className="mt-6">
-                    <Card>
-                      <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4 mb-4">
-                          <Avatar className="h-16 w-16 ring-2 ring-primary/10">
-                            <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+                <div className="grid grid-cols-12 gap-6">
+                  {/* Left Column */}
+                  <div className="col-span-12 lg:col-span-7 xl:col-span-5">
+                    <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
+                      <CardHeader className="pb-0">
+                        <CardTitle className="text-lg font-semibold">Personal Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col items-center mb-8">
+                          <Avatar className="h-20 w-20 ring-2 ring-primary/10">
+                            <AvatarFallback className="text-2xl font-semibold">{initials}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="font-medium text-lg">{name || "Your Name"}</p>
-                            <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
-                          </div>
+                          <p className="text-base font-semibold mt-3">{name || "Your Name"}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{session?.user?.email}</p>
                         </div>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
-                          <Input label="Email" type="email" value={session?.user?.email || ""} disabled />
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
+                            <Input label="Email" type="email" value={session?.user?.email || ""} disabled />
+                          </div>
                           <Input label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" />
                         </div>
-                        <Button onClick={handleSave} loading={saving}>
-                          <CheckCircle className="h-4 w-4" /> Save Changes
-                        </Button>
+                        <div className="flex justify-end mt-6">
+                          <Button onClick={handleSave} loading={saving} className="px-6 bg-[#2563EB] hover:bg-[#2563EB]/90">
+                            <CheckCircle className="h-4 w-4" /> Save Changes
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
-                  </TabsContent>
+                  </div>
 
-                  <TabsContent value="security" className="mt-6">
-                    <div className="grid gap-6 lg:grid-cols-3">
-                      <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                          <CardHeader><CardTitle>Change Password</CardTitle></CardHeader>
-                          <CardContent className="space-y-4">
-                            <Input label="Current Password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <Input label="New Password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                              <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                            </div>
-                            <Button onClick={handleChangePassword} loading={changingPassword}>
-                              <Key className="h-4 w-4" /> Change Password
-                            </Button>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader><CardTitle>Two-Factor Authentication</CardTitle></CardHeader>
-                          <CardContent>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded-lg ${twoFactorEnabled ? "bg-emerald-100 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
-                                  <Shield className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="font-medium">Two-Factor Authentication</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {twoFactorEnabled
-                                      ? "Your account is secured with 2FA"
-                                      : "Add an extra layer of security to your account"}
-                                  </p>
-                                </div>
-                              </div>
-                              <Switch checked={twoFactorEnabled} onCheckedChange={handle2FAChange} disabled={pending2FA} />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <div>
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Security Tips</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3 text-sm">
-                            <div className="flex items-start gap-2">
-                              <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                              <span className="text-muted-foreground">Use a strong, unique password</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <CheckCircle className={`h-4 w-4 mt-0.5 shrink-0 ${twoFactorEnabled ? "text-emerald-500" : "text-muted-foreground"}`} />
-                              <span className="text-muted-foreground">Enable two-factor authentication</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <CheckCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                              <span className="text-muted-foreground">Use a password manager</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="notifications" className="mt-6">
-                    <Card>
-                      <CardHeader><CardTitle>Notification Preferences</CardTitle></CardHeader>
+                  {/* Middle Column */}
+                  <div className="col-span-12 lg:col-span-5 xl:col-span-4 space-y-6">
+                    <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
+                      <CardHeader>
+                        <CardTitle className="text-lg font-semibold">Change Password</CardTitle>
+                      </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/20 transition-colors">
-                          <div>
-                            <p className="font-medium">Order updates via email</p>
-                            <p className="text-sm text-muted-foreground">Receive order status updates</p>
+                        <PasswordInput label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
+                        <PasswordInput label="New Password" value={newPassword} onChange={setNewPassword} />
+                        <PasswordInput label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} />
+                        <div className="flex justify-end pt-1">
+                          <Button onClick={handleChangePassword} loading={changingPassword} variant="outline" className="px-5">
+                            <Key className="h-4 w-4" /> Update Password
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
+                      <CardHeader>
+                        <CardTitle className="text-lg font-semibold">Notification Preferences</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                              <Mail className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Email Notifications</p>
+                              <p className="text-xs text-muted-foreground">Receive order updates via email</p>
+                            </div>
                           </div>
                           <Switch checked={emailNotifications} onCheckedChange={(v) => { setEmailNotifications(v); saveSetting("emailNotifications", v) }} />
                         </div>
-                        <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/20 transition-colors">
-                          <div>
-                            <p className="font-medium">Push notifications</p>
-                            <p className="text-sm text-muted-foreground">Receive real-time order alerts</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                              <Bell className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Push Notifications</p>
+                              <p className="text-xs text-muted-foreground">Receive real-time order alerts</p>
+                            </div>
                           </div>
                           <Switch checked={pushNotifications} onCheckedChange={(v) => { setPushNotifications(v); saveSetting("pushNotifications", v) }} />
                         </div>
-                        <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/20 transition-colors">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Globe className="h-4 w-4 text-muted-foreground" />
-                              <p className="font-medium">Language</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                              <Eye className="h-4 w-4" />
                             </div>
-                            <p className="text-sm text-muted-foreground">English (India)</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/20 transition-colors">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                              <p className="font-medium">Dark Mode</p>
+                            <div>
+                              <p className="text-sm font-medium">Dark Mode</p>
+                              <p className="text-xs text-muted-foreground">Toggle dark theme</p>
                             </div>
-                            <p className="text-sm text-muted-foreground">Toggle dark theme</p>
                           </div>
                           <Switch checked={darkMode} onCheckedChange={handleDarkMode} disabled={!loaded} />
                         </div>
                       </CardContent>
                     </Card>
-                  </TabsContent>
-                </Tabs>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="col-span-12 xl:col-span-3 space-y-5">
+                    <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
+                      <CardContent className="flex flex-col items-center py-6 px-6">
+                        <div className="p-3 rounded-full bg-primary/10 text-primary mb-4">
+                          <Shield className="h-8 w-8" />
+                        </div>
+                        <p className="text-sm font-semibold text-center">Two-factor authentication is {twoFactorEnabled ? "enabled" : "disabled"}</p>
+                        <p className="text-xs text-muted-foreground text-center mt-1.5">
+                          {twoFactorEnabled ? "Your account is protected with 2FA." : "Add extra security to your account."}
+                        </p>
+                        <Switch checked={twoFactorEnabled} onCheckedChange={handle2FAChange} disabled={pending2FA} className="mt-4" />
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-[#E5E7EB]">
+                      <CardHeader>
+                        <CardTitle className="text-base font-semibold text-destructive">Delete Account</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-xs text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                        <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/5" onClick={() => setShowDeleteDialog(true)}>
+                          <Trash2 className="h-4 w-4" /> Delete My Account
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </>
             )}
 
-            <Card className="mt-6 border-destructive/50">
+            <Card className="mt-6 rounded-2xl shadow-[0_2px_10px_rgba(15,23,42,0.05)] border-destructive/50 hidden">
               <CardHeader><CardTitle className="text-destructive">Delete Account</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">This action is irreversible. All your data will be permanently deleted.</p>
