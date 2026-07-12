@@ -15,7 +15,7 @@ export default function ShopReportsPage() {
       <DashboardNavbar title="Reports" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <div className="grid gap-6 md:grid-cols-3">
             {[
               { title: "Monthly Sales Report", type: "PDF", date: "Jan 2025" },

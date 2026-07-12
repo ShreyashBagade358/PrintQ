@@ -76,7 +76,7 @@ export default function ShopStaffPage() {
       <DashboardNavbar title="Staff Management" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -96,8 +96,9 @@ export default function ShopStaffPage() {
                   <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
                 ) : staff.length === 0 ? (
                   <p className="text-center text-muted-foreground py-10">No staff members yet.</p>
-                ) : (
-                  <Table>
+                  ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
@@ -134,9 +135,10 @@ export default function ShopStaffPage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
-                )}
-              </CardContent>
+                    </Table>
+                  </div>
+                  )}
+                </CardContent>
             </Card>
           </motion.div>
 

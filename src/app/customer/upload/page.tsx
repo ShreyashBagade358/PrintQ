@@ -373,7 +373,7 @@ function CustomerUploadContent() {
       <DashboardNavbar title="Print Settings" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-4 lg:p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64">
           <div className="mx-auto max-w-5xl space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}

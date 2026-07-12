@@ -65,7 +65,7 @@ export default function ShopOrdersPage() {
         <DashboardNavbar title="Orders" type="shop" />
         <div className="flex">
           <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
               <div className="h-10 bg-muted rounded w-64" />
               <div className="h-10 bg-muted rounded w-96" />
@@ -82,7 +82,7 @@ export default function ShopOrdersPage() {
       <DashboardNavbar title="Orders" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -115,7 +115,8 @@ export default function ShopOrdersPage() {
                         <p className="font-medium">No orders found</p>
                       </div>
                     ) : (
-                      <Table>
+                      <div className="overflow-x-auto">
+                        <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead>Order ID</TableHead>
@@ -147,6 +148,7 @@ export default function ShopOrdersPage() {
                           ))}
                         </TableBody>
                       </Table>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

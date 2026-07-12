@@ -85,7 +85,7 @@ export function Sidebar({ type }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col border-r transition-all duration-300",
+        "fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col border-r transition-all duration-300 max-md:hidden",
         "bg-background",
         collapsed ? "w-16" : "w-64"
       )}

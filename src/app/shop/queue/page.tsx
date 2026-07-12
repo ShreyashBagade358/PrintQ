@@ -124,7 +124,7 @@ export default function ShopQueuePage() {
         <DashboardNavbar title="Active Queue" type="shop" />
         <div className="flex">
           <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
               <div className="h-10 bg-muted rounded w-64" />
               <div className="h-64 bg-muted rounded" />
@@ -140,7 +140,7 @@ export default function ShopQueuePage() {
       <DashboardNavbar title="Active Queue" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -179,7 +179,8 @@ export default function ShopQueuePage() {
                     <p className="text-sm">New orders will appear here when received</p>
                   </div>
                 ) : (
-                  <Table>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>#</TableHead>
@@ -279,9 +280,10 @@ export default function ShopQueuePage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
-                )}
-              </CardContent>
+                    </Table>
+                  </div>
+                  )}
+                </CardContent>
             </Card>
           </motion.div>
         </main>

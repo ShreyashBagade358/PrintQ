@@ -14,7 +14,7 @@ export default function UploadSuccessPage() {
       <DashboardNavbar title="Order Submitted" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
           <div className="mx-auto max-w-lg py-12">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}

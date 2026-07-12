@@ -16,7 +16,7 @@ export default function AdminSettingsPage() {
       <DashboardNavbar title="Global Settings" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
           <Tabs defaultValue="general">
             <TabsList>
               <TabsTrigger value="general">General</TabsTrigger>

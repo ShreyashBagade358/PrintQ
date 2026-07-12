@@ -69,7 +69,7 @@ export default function ShopCustomersPage() {
       <DashboardNavbar title="Customers" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -98,8 +98,9 @@ export default function ShopCustomersPage() {
                   <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
                 ) : customers.length === 0 ? (
                   <p className="text-center text-muted-foreground py-10">No customers found.</p>
-                ) : (
-                  <Table>
+                  ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Customer</TableHead>
@@ -134,6 +135,7 @@ export default function ShopCustomersPage() {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
                 )}
               </CardContent>
             </Card>

@@ -64,7 +64,7 @@ export default function CustomerNotificationsPage() {
       <DashboardNavbar title="Notifications" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">Notifications</h2>

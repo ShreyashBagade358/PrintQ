@@ -18,7 +18,7 @@ export default function AdminCMSPage() {
       <DashboardNavbar title="CMS Management" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <Tabs defaultValue="pages">
             <div className="flex items-center justify-between mb-4">
               <TabsList>
@@ -34,6 +34,7 @@ export default function AdminCMSPage() {
             <TabsContent value="pages">
               <Card>
                 <CardContent className="p-0">
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -67,7 +68,7 @@ export default function AdminCMSPage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                  </Table></div>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -27,7 +27,7 @@ export default function AdminSubscriptionsPage() {
       <DashboardNavbar title="Subscription Management" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -75,7 +75,8 @@ export default function AdminSubscriptionsPage() {
                 <CardTitle>Recent Transactions</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Transaction ID</TableHead>
@@ -98,7 +99,8 @@ export default function AdminSubscriptionsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </motion.div>

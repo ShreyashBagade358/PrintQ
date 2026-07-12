@@ -23,7 +23,7 @@ export default function AdminTicketsPage() {
       <DashboardNavbar title="Support Tickets" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -50,6 +50,7 @@ export default function AdminTicketsPage() {
           >
             <Card>
               <CardContent className="p-0">
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -81,7 +82,7 @@ export default function AdminTicketsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </Table></div>
               </CardContent>
             </Card>
           </motion.div>

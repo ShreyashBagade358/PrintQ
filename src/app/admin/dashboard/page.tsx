@@ -27,7 +27,7 @@ export default function AdminDashboardPage() {
       <DashboardNavbar title="Admin Dashboard" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, index) => {
               const Icon = stat.icon
@@ -125,6 +125,7 @@ export default function AdminDashboardPage() {
                 <CardTitle>Recent Shop Registrations</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -143,13 +144,13 @@ export default function AdminDashboardPage() {
                         <TableCell>{shop.plan}</TableCell>
                         <TableCell><StatusBadge status={shop.status} /></TableCell>
                         <TableCell className="text-muted-foreground">{shop.date}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </motion.div>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table></div>
+            </CardContent>
+          </Card>
+        </motion.div>
         </main>
       </div>
     </div>

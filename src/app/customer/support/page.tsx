@@ -14,7 +14,7 @@ export default function CustomerSupportPage() {
       <DashboardNavbar title="Support" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <div className="grid gap-6 md:grid-cols-3">
             {[
               { icon: MessageSquare, title: "Live Chat", desc: "Chat with our team" },

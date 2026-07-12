@@ -68,7 +68,7 @@ export default function ShopDashboardPage() {
         <DashboardNavbar title="Dashboard" type="shop" />
         <div className="flex">
           <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -88,7 +88,7 @@ export default function ShopDashboardPage() {
       <DashboardNavbar title="Dashboard" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {statCards.map((stat, index) => {
               const Icon = stat.icon
@@ -131,7 +131,7 @@ export default function ShopDashboardPage() {
                 <CardTitle>Quick Stats</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {secondaryStats.map((stat) => (
                     <div key={stat.label} className="p-4 rounded-lg bg-muted/50">
                       <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -187,7 +187,8 @@ export default function ShopDashboardPage() {
                   <p className="font-medium">No orders yet</p>
                 </div>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Order ID</TableHead>
@@ -215,6 +216,7 @@ export default function ShopDashboardPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>

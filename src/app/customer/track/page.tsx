@@ -142,7 +142,7 @@ function TrackOrderContent() {
       <DashboardNavbar title="Track Order" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-4 lg:p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64">
           <div className="mx-auto max-w-2xl space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -281,7 +281,7 @@ export default function TrackOrderPage() {
         <DashboardNavbar title="Track Order" type="customer" />
         <div className="flex">
           <Sidebar type="customer" />
-          <main className="flex-1 p-4 lg:p-8 ml-16 lg:ml-64 flex items-center justify-center">
+          <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </main>
         </div>

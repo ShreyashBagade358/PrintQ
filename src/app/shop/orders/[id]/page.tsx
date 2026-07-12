@@ -266,7 +266,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
         <DashboardNavbar title="Order Details" type="shop" />
         <div className="flex">
           <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
               <div className="h-10 bg-muted rounded w-64" />
               <div className="grid gap-6 lg:grid-cols-3">
@@ -286,7 +286,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
         <DashboardNavbar title="Order Details" type="shop" />
         <div className="flex">
           <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64">
+          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="text-center py-16 text-muted-foreground">
               <p className="font-medium">Order not found</p>
               <Link href="/shop/orders" className="text-sm text-primary hover:underline mt-2 inline-block">&larr; Back to Orders</Link>
@@ -302,7 +302,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
       <DashboardNavbar title={`Order ${order.orderId}`} type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-4 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

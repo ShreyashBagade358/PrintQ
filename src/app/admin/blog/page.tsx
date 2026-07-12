@@ -16,7 +16,7 @@ export default function AdminBlogPage() {
       <DashboardNavbar title="Blog Management" type="admin" />
       <div className="flex">
         <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <div className="flex items-center justify-between">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -26,8 +26,9 @@ export default function AdminBlogPage() {
           </div>
 
           <Card>
-            <CardContent className="p-0">
-              <Table>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
@@ -59,7 +60,7 @@ export default function AdminBlogPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </Table></div>
             </CardContent>
           </Card>
         </main>

@@ -51,7 +51,7 @@ export default function CustomerSettingsPage() {
       <DashboardNavbar title="Settings" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <Card>
             <CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
             <CardContent className="space-y-4">

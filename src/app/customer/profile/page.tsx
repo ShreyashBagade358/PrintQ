@@ -179,7 +179,7 @@ export default function CustomerProfilePage() {
       <DashboardNavbar title="Profile" type="customer" />
       <div className="flex">
         <Sidebar type="customer" />
-        <main className="flex-1 p-8 ml-16 lg:ml-64">
+        <main className="flex-1 p-8 md:ml-16 lg:ml-64">
           {loading ? (
             <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (

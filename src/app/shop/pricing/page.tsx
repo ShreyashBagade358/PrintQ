@@ -25,7 +25,7 @@ export default function ShopPricingPage() {
       <DashboardNavbar title="Pricing Management" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 ml-16 lg:ml-64 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,7 +35,8 @@ export default function ShopPricingPage() {
                 <CardTitle>Price Per Page</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Paper Size</TableHead>
@@ -60,7 +61,8 @@ export default function ShopPricingPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
 
                 <div className="mt-6 rounded-lg border p-4">
                   <h4 className="font-medium mb-4">Add Pricing Rule</h4>
