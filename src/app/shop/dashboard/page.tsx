@@ -12,6 +12,7 @@ import { getShopDashboardAction } from "@/lib/actions/dashboard.actions"
 import { formatCurrency, formatDateTime } from "@/lib/utils"
 import { QrDisplay } from "@/components/shop/qr-display"
 import Link from "next/link"
+import { TutorialProvider } from "@/components/onboarding/tutorial-provider"
 
 interface DashboardData {
   stats: {
@@ -89,7 +90,7 @@ export default function ShopDashboardPage() {
       <div className="flex">
         <Sidebar type="shop" />
         <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="shop-stats">
             {statCards.map((stat, index) => {
               const Icon = stat.icon
               return (
@@ -175,9 +176,9 @@ export default function ShopDashboardPage() {
             </Card>
           </div>
 
-          <QrDisplay />
+          <div data-tour="shop-qr"><QrDisplay /></div>
 
-          <Card>
+          <Card data-tour="shop-orders-table">
             <CardHeader>
               <CardTitle>Recent Orders</CardTitle>
             </CardHeader>
@@ -222,6 +223,7 @@ export default function ShopDashboardPage() {
           </Card>
         </main>
       </div>
+      <TutorialProvider />
     </div>
   )
 }

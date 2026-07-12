@@ -10,6 +10,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { getCustomerDashboardAction } from "@/lib/actions/profile.actions"
+import { TutorialProvider } from "@/components/onboarding/tutorial-provider"
 import { formatCurrency, formatDateTime } from "@/lib/utils"
 
 interface DashboardData {
@@ -102,7 +103,7 @@ export default function CustomerDashboardPage() {
                 </motion.div>
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="customer-stats">
                 {statCards.map((stat, i) => {
                   const Icon = stat.icon
                   return (
@@ -131,7 +132,7 @@ export default function CustomerDashboardPage() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="lg:col-span-2">
+                <Card className="lg:col-span-2" data-tour="customer-orders">
                   <CardHeader>
                     <CardTitle>Recent Orders</CardTitle>
                   </CardHeader>
@@ -164,7 +165,7 @@ export default function CustomerDashboardPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card data-tour="customer-actions">
                   <CardHeader>
                     <CardTitle>Quick Actions</CardTitle>
                   </CardHeader>
@@ -187,6 +188,7 @@ export default function CustomerDashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+            <TutorialProvider />
             </>
           )}
         </main>

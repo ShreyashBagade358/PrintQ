@@ -105,10 +105,20 @@ export function Sidebar({ type }: SidebarProps) {
         {links.map((link) => {
           const Icon = link.icon
           const isActive = pathname === link.href || pathname.startsWith(link.href + "/")
+          const tourAttrs: Record<string, string> = {
+            "/customer/upload": "customer-upload",
+            "/scan": "customer-scan",
+            "/shop/queue": "shop-queue",
+            "/shop/orders": "shop-orders-nav",
+            "/shop/printers": "shop-printers",
+            "/shop/pricing": "shop-pricing",
+          }
+          const tourAttr = tourAttrs[link.href]
           return (
             <Link
               key={link.href}
               href={link.href}
+              {...(tourAttr ? { "data-tour": tourAttr } : {})}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive

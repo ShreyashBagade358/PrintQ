@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getUnreadNotificationCountAction } from "@/lib/actions/notification.actions"
+import { TutorialButton } from "@/components/onboarding/tutorial-button"
 
 interface DashboardNavbarProps {
   title?: string
@@ -56,6 +57,7 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
       </div>
 
       <div className="flex items-center gap-3">
+        <TutorialButton />
         <Link href={notifPath}>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

@@ -50,6 +50,7 @@ export default function ShopLoginPage() {
           </div>
 
           <form action={formAction} className="space-y-5">
+            <input type="hidden" name="expectedRole" value="SHOP" />
             <Input label="Email" name="email" type="email" placeholder="shop@example.com" required />
             <div className="relative">
               <Input

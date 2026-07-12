@@ -40,6 +40,8 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
   }
 
   try {
+    const expectedRole = formData.get("expectedRole") as string | null
+
     await signIn("credentials", {
       email: validated.data.email,
       password: validated.data.password,
@@ -50,6 +52,13 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
       where: { email: validated.data.email },
       select: { role: true },
     })
+
+    if (expectedRole === "CUSTOMER" && user?.role !== "CUSTOMER") {
+      return { error: "This email is registered as a shop account. Please use Shop Login." }
+    }
+    if (expectedRole === "SHOP" && user?.role !== "SHOP_OWNER" && user?.role !== "STAFF") {
+      return { error: "This email is registered as a customer account. Please use Customer Login." }
+    }
 
     const redirect = user?.role === "SHOP_OWNER" || user?.role === "STAFF"
       ? "/shop/dashboard"

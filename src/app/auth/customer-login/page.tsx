@@ -52,6 +52,7 @@ function CustomerLoginContent() {
           </div>
 
           <form action={formAction} className="space-y-5">
+            <input type="hidden" name="expectedRole" value="CUSTOMER" />
             <Input label="Email" name="email" type="email" placeholder="you@example.com" required />
             <div className="relative">
               <Input
