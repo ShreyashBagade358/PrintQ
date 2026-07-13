@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
             </div>
             <span className="text-2xl font-bold">PrintQ</span>
           </Link>
-          <h1 className="text-3xl font-bold">Reset password</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Reset password</h1>
           <p className="mt-2 text-muted-foreground">
             Choose a new password for your account.
           </p>

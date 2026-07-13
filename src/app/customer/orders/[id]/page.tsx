@@ -308,7 +308,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
                     <CardTitle className="text-lg">Order Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="rounded-lg bg-muted/30 p-2.5">
                         <p className="text-xs text-muted-foreground">Pages</p>
                         <p className="font-medium">{order.pages}</p>
@@ -339,7 +339,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
                       <>
                         <div className="border-t pt-3">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Your Settings</p>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             {typeof order.printSettings.orientation === "string" && (
                               <div className="rounded-lg bg-muted/20 p-2">
                                 <p className="text-muted-foreground">Orientation</p>
@@ -490,7 +490,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
               }
 
               return (
-                <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
+                <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 md:p-12">
                   <FileText className="h-20 w-20 text-primary/40 mb-4" />
                   <p className="text-lg font-medium">Document Preview</p>
                   <p className="text-sm text-muted-foreground mt-1">{previewFile?.name}</p>
@@ -500,7 +500,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
                 </div>
               )
             })()}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-muted-foreground text-xs">File size</p>
                 <p className="font-medium">{previewFile ? (previewFile.size / 1024 / 1024).toFixed(1) : 0} MB</p>

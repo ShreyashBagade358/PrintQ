@@ -39,24 +39,24 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
   const notifPath = type === "admin" ? "/admin/notifications" : `/${type}/notifications`
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
-      <Link href={`/${type}/dashboard`} className="flex items-center gap-2 lg:hidden">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-4 lg:px-6">
+      <Link href={`/${type}/dashboard`} className="flex items-center gap-2 lg:hidden shrink-0">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
           <Printer className="h-4 w-4 text-white" />
         </div>
         <span className="text-lg font-bold">PrintQ</span>
       </Link>
 
-      <div className="hidden flex-1 sm:block">
-        <h1 className="text-lg font-semibold">{title}</h1>
+      <div className="flex-1 min-w-0">
+        <h1 className="text-base sm:text-lg font-semibold truncate">{title}</h1>
       </div>
 
-      <div className="relative hidden flex-1 md:block">
+      <div className="relative hidden flex-1 md:block max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search..." className="pl-9 w-full max-w-sm" />
+        <Input placeholder="Search..." className="pl-9 w-full" />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3">
         <TutorialButton />
         <Link href={notifPath}>
           <Button variant="ghost" size="icon" className="relative">

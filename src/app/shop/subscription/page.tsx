@@ -68,7 +68,7 @@ export default function ShopSubscriptionPage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold">{plan.name}</h3>
                     <div className="mt-3">
-                      <span className="text-3xl font-bold">{plan.price}</span>
+                      <span className="text-2xl sm:text-3xl font-bold">{plan.price}</span>
                       <span className="text-sm text-muted-foreground ml-1">/mo</span>
                       <p className="text-xs text-muted-foreground mt-1">or {plan.yearly} (save 15%)</p>
                     </div>

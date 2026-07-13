@@ -87,7 +87,7 @@ export function Sidebar({ type }: SidebarProps) {
       className={cn(
         "fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col border-r transition-all duration-300 max-md:hidden",
         "bg-background",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-16 lg:w-64"
       )}
     >
       <div className="flex items-center justify-end p-2">

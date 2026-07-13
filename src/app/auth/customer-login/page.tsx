@@ -47,7 +47,7 @@ function CustomerLoginContent() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg mb-4">
               <User className="h-7 w-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold">Customer Login</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Customer Login</h1>
             <p className="mt-2 text-muted-foreground">Sign in to track your print orders</p>
           </div>
 

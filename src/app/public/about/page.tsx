@@ -95,7 +95,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mb-12 text-center text-3xl font-bold"
+              className="mb-12 text-center text-2xl sm:text-3xl font-bold"
             >
               Our Story
             </motion.h2>
@@ -108,11 +108,11 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    className={`relative flex items-center gap-8 ${
-                      index % 2 === 0 ? "flex-row" : "flex-row-reverse"
+                    className={`relative flex-col md:flex-row items-center gap-4 md:gap-8 ${
+                      index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
                     }`}
                   >
-                    <div className={`flex-1 ${index % 2 === 0 ? "text-right" : "text-left"}`}>
+                    <div className={`w-full md:flex-1 ${index % 2 === 0 ? "md:text-right" : "md:text-left"}`}>
                       <div className="rounded-xl border bg-card p-4">
                         <p className="text-sm text-muted-foreground">{item.event}</p>
                       </div>
@@ -120,7 +120,7 @@ export default function AboutPage() {
                     <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-background bg-primary text-sm font-bold text-white">
                       {item.year}
                     </div>
-                    <div className="flex-1" />
+                    <div className="hidden md:block flex-1" />
                   </motion.div>
                 ))}
               </div>
@@ -136,7 +136,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="rounded-2xl bg-gradient-to-br from-primary to-blue-700 px-8 py-16 text-white"
             >
-              <h2 className="text-3xl font-bold">Join the PrintQ family</h2>
+              <h2 className="text-xl sm:text-3xl font-bold">Join the PrintQ family</h2>
               <p className="mx-auto mt-4 max-w-xl text-white/80">
                 Start your journey with 500+ print shops that trust PrintQ.
               </p>

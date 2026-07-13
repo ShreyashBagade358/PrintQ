@@ -11,7 +11,7 @@ export default function ForbiddenPage() {
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-orange-100 mb-6">
           <ShieldX className="h-10 w-10 text-orange-600" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-3">403</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">403</h1>
         <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
         <p className="text-muted-foreground mb-8">
           You don&apos;t have permission to access this page. Please contact your administrator.

@@ -40,7 +40,7 @@ function ErrorPageContent({ code, title, description, illustration }: typeof err
       <main className="flex items-center justify-center px-4 py-20 min-h-[80vh]">
         <div className="text-center max-w-md">
           <div className="text-8xl mb-6">{illustration}</div>
-          <h1 className="text-6xl font-bold text-primary">{code}</h1>
+          <h1 className="text-4xl sm:text-6xl font-bold text-primary">{code}</h1>
           <h2 className="text-2xl font-bold mt-4">{title}</h2>
           <p className="mt-2 text-muted-foreground">{description}</p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">

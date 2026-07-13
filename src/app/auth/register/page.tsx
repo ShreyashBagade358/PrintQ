@@ -104,11 +104,11 @@ export default function RegisterPage() {
                   <Input label="Shop Name" name="shopName" placeholder="e.g. PrintPro Delhi" value={shopName} onChange={(e) => setShopName(e.target.value)} required />
                   <Input label="Shop URL" name="shopSlug" placeholder="e.g. printpro-delhi" value={shopSlug} onChange={(e) => setShopSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))} required />
                   <Input label="Address" name="address" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} required />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input label="City" name="city" placeholder="Delhi" value={city} onChange={(e) => setCity(e.target.value)} required />
                     <Input label="State" name="state" placeholder="Delhi" value={state} onChange={(e) => setState(e.target.value)} required />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input label="PIN Code" name="pinCode" placeholder="110001" value={pinCode} onChange={(e) => setPinCode(e.target.value)} required />
                     <Input label="Shop Phone" name="shopPhone" type="tel" placeholder="+91 98765 43210" value={shopPhone} onChange={(e) => setShopPhone(e.target.value)} required />
                   </div>

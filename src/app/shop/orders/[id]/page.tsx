@@ -429,7 +429,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label className="flex items-center gap-1.5 text-xs">
                           <Printer className="h-3.5 w-3.5" /> Printer
@@ -546,7 +546,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
                           exit={{ opacity: 0, height: 0 }}
                           className="border-t pt-4 mt-4 space-y-4"
                         >
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             <div className="flex items-center justify-between rounded-lg border p-3">
                               <Label className="flex items-center gap-2 text-xs cursor-pointer">
                                 <RotateCcw className="h-3.5 w-3.5" /> Auto Rotate
@@ -747,7 +747,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
                     <div className="flex justify-between text-sm"><span className="text-muted-foreground">Email</span><span className="font-medium">{order.customer?.email || "—"}</span></div>
                     {order.customer?.phone && <div className="flex justify-between text-sm"><span className="text-muted-foreground">Phone</span><span className="font-medium">{order.customer.phone}</span></div>}
                     <div className="border-t my-2" />
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-xs text-muted-foreground">Pages</p><p className="font-medium">{order.pages}</p></div>
                       <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-xs text-muted-foreground">Copies</p><p className="font-medium">{order.copies}</p></div>
                       <div className="rounded-lg bg-muted/30 p-2.5"><p className="text-xs text-muted-foreground">Color</p><p className="font-medium">{order.color}</p></div>
@@ -759,7 +759,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
                       <>
                         <div className="border-t my-2" />
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer Settings</p>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                           {typeof customerSettings.orientation === "string" && <div className="rounded-lg bg-muted/20 p-2"><p className="text-muted-foreground">Orientation</p><p className="font-medium capitalize">{customerSettings.orientation}</p></div>}
                           {typeof customerSettings.printQuality === "string" && <div className="rounded-lg bg-muted/20 p-2"><p className="text-muted-foreground">Quality</p><p className="font-medium capitalize">{customerSettings.printQuality}</p></div>}
                           {customerSettings.pageRange === "custom" && typeof customerSettings.customPageRange === "string" && <div className="rounded-lg bg-muted/20 p-2 col-span-2"><p className="text-muted-foreground">Page Range</p><p className="font-medium">{customerSettings.customPageRange}</p></div>}
@@ -897,7 +897,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
               }
 
               return (
-                <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
+                <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 md:p-12">
                   <FileText className="h-20 w-20 text-primary/40 mb-4" />
                   <p className="text-lg font-medium">Document Preview</p>
                   <p className="text-sm text-muted-foreground mt-1">{previewFile?.name}</p>
@@ -907,7 +907,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
                 </div>
               )
             })()}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-muted-foreground text-xs">File size</p>
                 <p className="font-medium">{previewFile ? (previewFile.size / 1024 / 1024).toFixed(1) : 0} MB</p>

@@ -2,10 +2,9 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { verifyShopQrAction, recordScanAction } from "@/lib/actions/qr.actions"
-import { AlertCircle, Store, ArrowLeft, QrCode } from "lucide-react"
+import { AlertCircle, ArrowLeft, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { headers } from "next/headers"
 
 interface Props {
   params: Promise<{ token: string }>
@@ -18,9 +17,9 @@ export default async function ScanTokenPage({ params }: Props) {
 
   if (!result.valid || !result.shop) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+      <div className="flex items-center justify-center py-12">
         <Card className="max-w-md w-full">
-          <CardContent className="p-8 text-center space-y-4">
+          <CardContent className="p-4 sm:p-8 text-center space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
               <AlertCircle className="h-8 w-8 text-red-600" />
             </div>
@@ -45,9 +44,9 @@ export default async function ScanTokenPage({ params }: Props) {
 
   if (session.user.role !== "CUSTOMER") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+      <div className="flex items-center justify-center py-12">
         <Card className="max-w-md w-full">
-          <CardContent className="p-8 text-center space-y-4">
+          <CardContent className="p-4 sm:p-8 text-center space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
               <AlertCircle className="h-8 w-8 text-amber-600" />
             </div>

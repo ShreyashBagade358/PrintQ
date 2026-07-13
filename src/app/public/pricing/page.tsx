@@ -132,7 +132,7 @@ export default function PricingPage() {
                   <h3 className="text-xl font-bold">{plan.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">
+                    <span className="text-3xl sm:text-4xl font-bold">
                       ₹{yearly ? plan.yearlyPrice : plan.monthlyPrice}
                     </span>
                     <span className="text-sm text-muted-foreground">

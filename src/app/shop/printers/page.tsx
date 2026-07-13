@@ -154,7 +154,7 @@ export default function ShopPrintersPage() {
           <Sidebar type="shop" />
           <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-64" />
+              <div className="h-10 bg-muted rounded w-full max-w-64" />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-48 bg-muted rounded-lg" />
@@ -193,7 +193,7 @@ export default function ShopPrintersPage() {
                   <DialogTitle>Add Printer</DialogTitle>
                 </DialogHeader>
                 <Tabs value={addMode} onValueChange={(v) => setAddMode(v as "manual" | "discover")}>
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
                     <TabsTrigger value="discover">Scan System</TabsTrigger>
                     <TabsTrigger value="manual">Manual / IPP</TabsTrigger>
                   </TabsList>

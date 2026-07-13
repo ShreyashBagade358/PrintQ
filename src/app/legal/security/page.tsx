@@ -10,7 +10,7 @@ export default function SecurityPage() {
       <PublicNavbar />
       <main className="px-4 py-20">
         <div className="container mx-auto max-w-4xl">
-          <h1 className="text-4xl font-bold mb-4">Security Policy</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Security Policy</h1>
           <p className="text-muted-foreground mb-8">Last updated: January 1, 2025</p>
 
           <div className="space-y-8">

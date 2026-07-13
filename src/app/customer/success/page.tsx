@@ -24,7 +24,7 @@ export default function UploadSuccessPage() {
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle className="h-10 w-10 text-emerald-600" />
               </div>
-              <h1 className="text-3xl font-bold">Order Submitted!</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">Order Submitted!</h1>
               <p className="mt-2 text-muted-foreground">
                 Your print job has been received. We&apos;ll notify you when it&apos;s ready.
               </p>

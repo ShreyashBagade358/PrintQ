@@ -17,7 +17,7 @@ export default function ErrorPage({
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-red-100 mb-6">
           <AlertTriangle className="h-10 w-10 text-red-600" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-3">Something went wrong!</h1>
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">Something went wrong!</h1>
         <p className="text-muted-foreground mb-8">
           An unexpected error occurred. Our team has been notified.
         </p>

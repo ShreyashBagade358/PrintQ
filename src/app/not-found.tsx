@@ -9,7 +9,7 @@ export default function NotFound() {
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-100 mb-6">
           <FileQuestion className="h-10 w-10 text-blue-600" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-3">404</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">404</h1>
         <h2 className="text-xl font-semibold mb-2">Page not found</h2>
         <p className="text-muted-foreground mb-8">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.

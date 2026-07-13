@@ -83,7 +83,7 @@ export default function CustomerNotificationsPage() {
 
           {loading ? (
             <Card>
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-8">
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
@@ -91,7 +91,7 @@ export default function CustomerNotificationsPage() {
             </Card>
           ) : notifications.length === 0 ? (
             <Card>
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-8">
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Inbox className="h-12 w-12 mb-4" />
                   <p className="font-medium">No notifications yet</p>

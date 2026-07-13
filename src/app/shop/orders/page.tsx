@@ -67,8 +67,8 @@ export default function ShopOrdersPage() {
           <Sidebar type="shop" />
           <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
             <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-64" />
-              <div className="h-10 bg-muted rounded w-96" />
+              <div className="h-10 bg-muted rounded w-full max-w-64" />
+              <div className="h-10 bg-muted rounded w-full max-w-96" />
               <div className="h-64 bg-muted rounded" />
             </div>
           </main>

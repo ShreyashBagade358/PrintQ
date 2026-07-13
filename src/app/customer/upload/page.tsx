@@ -379,7 +379,7 @@ function CustomerUploadContent() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="text-3xl font-bold tracking-tight">New Print Job</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">New Print Job</h1>
               <p className="mt-1 text-muted-foreground">Configure your print settings and place your order.</p>
             </motion.div>
 
@@ -415,7 +415,7 @@ function CustomerUploadContent() {
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDrop}
                     onClick={handleBrowse}
-                    className={`rounded-xl border-2 border-dashed p-10 text-center transition-all cursor-pointer ${
+                    className={`rounded-xl border-2 border-dashed p-6 md:p-10 text-center transition-all cursor-pointer ${
                       dragging
                         ? "border-primary bg-primary/5 scale-[1.01]"
                         : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30"
@@ -551,7 +551,7 @@ function CustomerUploadContent() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Copies</Label>
                           <Input type="number" min={1} {...form.register("copies", { valueAsNumber: true })} />
@@ -598,7 +598,7 @@ function CustomerUploadContent() {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Orientation</Label>
                           <Select value={values.orientation} onValueChange={(v) => form.setValue("orientation", v as "portrait" | "landscape")}>
@@ -621,7 +621,7 @@ function CustomerUploadContent() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Print Sides</Label>
                           <Select value={values.sides} onValueChange={(v) => form.setValue("sides", v as "Single Sided" | "Double Sided")}>
@@ -658,7 +658,7 @@ function CustomerUploadContent() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {finishingCheckboxes.map((item) => (
                           <label
                             key={item.id}
@@ -852,7 +852,7 @@ function CustomerUploadContent() {
                 />
               </div>
             ) : previewFile?.type.includes("pdf") ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
+              <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 md:p-12">
                 <FileText className="h-20 w-20 text-primary/40 mb-4" />
                 <p className="text-lg font-medium">PDF Preview</p>
                 <p className="text-sm text-muted-foreground mt-1">{previewFile.name}</p>
@@ -863,7 +863,7 @@ function CustomerUploadContent() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-12">
+              <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-6 md:p-12">
                 <FileText className="h-20 w-20 text-primary/40 mb-4" />
                 <p className="text-lg font-medium">Document Preview</p>
                 <p className="text-sm text-muted-foreground mt-1">{previewFile?.name}</p>
@@ -872,7 +872,7 @@ function CustomerUploadContent() {
                 </a>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-muted-foreground text-xs">File size</p>
                 <p className="font-medium">{previewFile ? (previewFile.size / 1024 / 1024).toFixed(1) : 0} MB</p>

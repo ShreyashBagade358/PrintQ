@@ -211,7 +211,7 @@ export default function ProfilePage() {
       <DashboardNavbar title="Profile" type="shop" />
       <div className="flex">
         <Sidebar type="shop" />
-        <main className="flex-1 p-8 md:ml-16 lg:ml-64">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 md:ml-16 lg:ml-64">
           {loading ? (
             <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
@@ -248,17 +248,17 @@ export default function ProfilePage() {
                           </div>
 
                           <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <Input label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
                               <Input label="Email Address" type="email" value={session?.user?.email || ""} disabled />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <Input label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" />
                               <Input label="Alternate Phone" value={altPhone} onChange={(e) => setAltPhone(e.target.value)} placeholder="+91 98765 43210" />
                             </div>
                             <Input label="Shop Name" value={shopName} onChange={(e) => setShopName(e.target.value)} />
                             <Textarea label="Shop Address" value={shopAddress} onChange={(e) => setShopAddress(e.target.value)} placeholder="Street address" className="min-h-[60px]" />
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <Input label="City" value={shopCity} onChange={(e) => setShopCity(e.target.value)} />
                               <Input label="State" value={shopState} onChange={(e) => setShopState(e.target.value)} />
                               <Input label="Pincode" value={shopPinCode} onChange={(e) => setShopPinCode(e.target.value)} />

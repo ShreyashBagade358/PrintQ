@@ -149,12 +149,12 @@ export default function ShopAnalyticsPage() {
                 <CardContent>
                   <div className="flex items-center justify-center h-[200px] gap-8">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-600">72%</div>
+                      <div className="text-3xl sm:text-4xl font-bold text-gray-600">72%</div>
                       <p className="text-sm text-muted-foreground mt-1">Black &amp; White</p>
                     </div>
                     <div className="h-20 w-px bg-border" />
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-primary">28%</div>
+                      <div className="text-3xl sm:text-4xl font-bold text-primary">28%</div>
                       <p className="text-sm text-muted-foreground mt-1">Color</p>
                     </div>
                   </div>
@@ -172,7 +172,7 @@ export default function ShopAnalyticsPage() {
                   <CardTitle>Quick Stats</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="rounded-lg border p-4 text-center">
                       <p className="text-2xl font-bold">₹45</p>
                       <p className="text-xs text-muted-foreground">Avg. per page (B&amp;W)</p>

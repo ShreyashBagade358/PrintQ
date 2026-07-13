@@ -11,7 +11,7 @@ export default function ServiceUnavailablePage() {
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-yellow-100 mb-6">
           <Wrench className="h-10 w-10 text-yellow-600" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-3">503</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">503</h1>
         <h2 className="text-xl font-semibold mb-2">Under Maintenance</h2>
         <p className="text-muted-foreground mb-8">
           We&apos;re performing scheduled maintenance. We&apos;ll be back shortly.

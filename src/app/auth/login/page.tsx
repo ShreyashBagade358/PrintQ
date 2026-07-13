@@ -43,7 +43,7 @@ export default function LoginPage() {
             </div>
             <span className="text-2xl font-bold">PrintQ</span>
           </Link>
-          <h1 className="text-3xl font-bold">Welcome to PrintQ</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Welcome to PrintQ</h1>
           <p className="mt-2 text-muted-foreground text-lg">Choose how you want to sign in</p>
         </div>
 
@@ -55,7 +55,7 @@ export default function LoginPage() {
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`group relative overflow-hidden rounded-2xl border bg-card p-8 transition-all ${role.borderHover} hover:shadow-lg hover:shadow-black/5 cursor-pointer`}
+                  className={`group relative overflow-hidden rounded-2xl border bg-card p-6 sm:p-8 transition-all ${role.borderHover} hover:shadow-lg hover:shadow-black/5 cursor-pointer`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${role.lightGradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
                   <div className="relative">
