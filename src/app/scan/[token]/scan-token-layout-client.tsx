@@ -3,7 +3,7 @@
 import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
 import { Sidebar } from "@/components/layout/sidebar"
 
-export function ScanLayoutClient({ children }: { children: React.ReactNode }) {
+export function ScanTokenLayoutClient({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <DashboardNavbar title="Scan Shop QR" type="customer" />
