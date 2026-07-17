@@ -5,6 +5,7 @@ import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { IndianRupee, ShoppingCart, FileText, TrendingUp, TrendingDown } from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
 const stats = [
   { icon: IndianRupee, label: "Revenue", value: "₹1,24,500", change: "+12.5%", trend: "up" },
@@ -15,6 +16,10 @@ const stats = [
 
 const monthlyRevenue = [45000, 52000, 48000, 58000, 55000, 62000, 68000, 72000, 65000, 78000, 85000, 95000]
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const pieData = [
+  { name: "Black & White", value: 72, color: "#6b7280" },
+  { name: "Color", value: 28, color: "#2563eb" },
+]
 
 export default function ShopAnalyticsPage() {
   const maxRevenue = Math.max(...monthlyRevenue)
@@ -147,15 +152,34 @@ export default function ShopAnalyticsPage() {
                   <CardTitle>Color vs B&amp;W Usage</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-[200px] gap-8">
-                    <div className="text-center">
-                      <div className="text-3xl sm:text-4xl font-bold text-gray-600">72%</div>
-                      <p className="text-sm text-muted-foreground mt-1">Black &amp; White</p>
+                  <div className="flex items-center justify-center h-[200px] gap-4 sm:gap-8">
+                    <div className="w-32 h-32 sm:w-36 sm:h-36">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={60} dataKey="value" startAngle={90} endAngle={-270}>
+                            {pieData.map((entry, idx) => (
+                              <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                    <div className="h-20 w-px bg-border" />
-                    <div className="text-center">
-                      <div className="text-3xl sm:text-4xl font-bold text-primary">28%</div>
-                      <p className="text-sm text-muted-foreground mt-1">Color</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-sm bg-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium">72%</p>
+                          <p className="text-xs text-muted-foreground">Black &amp; White</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-sm bg-primary" />
+                        <div>
+                          <p className="text-sm font-medium">28%</p>
+                          <p className="text-xs text-muted-foreground">Color</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
