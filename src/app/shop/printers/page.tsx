@@ -38,6 +38,7 @@ export default function ShopPrintersPage() {
   const [scanning, setScanning] = useState(false)
   const [ippUri, setIppUri] = useState("")
   const [addMode, setAddMode] = useState<"manual" | "discover">("manual")
+  const [submitting, setSubmitting] = useState(false)
 
   const fetchData = useCallback(async () => {
     const data = await getPrintersAction()
@@ -101,6 +102,8 @@ export default function ShopPrintersPage() {
   }
 
   const handleImportSystemPrinter = async (printer: { name: string; model: string }) => {
+    if (submitting) return
+    setSubmitting(true)
     const formData = new FormData()
     formData.set("name", printer.name)
     formData.set("model", printer.model || "Unknown")
@@ -115,13 +118,16 @@ export default function ShopPrintersPage() {
     } else {
       toast.error(result.error || "Failed to import printer")
     }
+    setSubmitting(false)
   }
 
   const handleAddIppPrinter = async () => {
+    if (submitting) return
     if (!ippUri.trim()) {
       toast.error("Enter a printer URI (e.g. ipp://192.168.1.100/ipp/print)")
       return
     }
+    setSubmitting(true)
     const name = `Network-${Date.now().toString(36).slice(-4)}`
     const formData = new FormData()
     formData.set("name", name)
@@ -138,6 +144,7 @@ export default function ShopPrintersPage() {
     } else {
       toast.error(result.error || "Failed to add printer")
     }
+    setSubmitting(false)
   }
 
   const filtered = printers.filter(
@@ -229,6 +236,7 @@ export default function ShopPrintersPage() {
                                 size="sm"
                                 variant="ghost"
                                 className="gap-1"
+                                disabled={submitting}
                                 onClick={() => handleImportSystemPrinter(sp)}
                               >
                                 <Download className="h-3 w-3" /> Import
@@ -249,7 +257,7 @@ export default function ShopPrintersPage() {
                           onChange={(e) => setIppUri(e.target.value)}
                           placeholder="ipp://192.168.1.100/ipp/print"
                         />
-                        <Button variant="outline" size="sm" onClick={handleAddIppPrinter}>
+                        <Button variant="outline" size="sm" disabled={submitting} onClick={handleAddIppPrinter}>
                           Add
                         </Button>
                       </div>
@@ -261,6 +269,8 @@ export default function ShopPrintersPage() {
                       <form
                         onSubmit={async (e) => {
                           e.preventDefault()
+                          if (submitting) return
+                          setSubmitting(true)
                           const form = e.currentTarget
                           const formData = new FormData(form)
                           const paperSizes: string[] = []
@@ -274,6 +284,7 @@ export default function ShopPrintersPage() {
                           } else {
                             toast.error(result.error || "Failed to add printer")
                           }
+                          setSubmitting(false)
                         }}
                         className="space-y-4"
                       >
@@ -306,7 +317,7 @@ export default function ShopPrintersPage() {
                             Duplex Capable
                           </label>
                         </div>
-                        <Button type="submit" className="w-full">Add Printer</Button>
+                        <Button type="submit" className="w-full" disabled={submitting}>Add Printer</Button>
                       </form>
                     </div>
                   </TabsContent>
