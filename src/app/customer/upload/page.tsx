@@ -345,9 +345,16 @@ function CustomerUploadContent() {
     }
   }
 
+  const STRIPE_MINIMUM_INR = 50
+
   const handlePayNow = async () => {
     const data = pendingOrderRef.current
     if (!data) return
+
+    if (paymentAmount < STRIPE_MINIMUM_INR) {
+      toast.error(`Card payments require at least ₹${STRIPE_MINIMUM_INR} (Stripe minimum). Please add more pages or choose Pay Later.`)
+      return
+    }
 
     setPaymentChoiceLoading(true)
     const paymentResult = await createPaymentIntentAction(paymentAmount)
