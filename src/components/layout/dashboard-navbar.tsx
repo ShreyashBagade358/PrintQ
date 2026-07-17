@@ -41,15 +41,13 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-3 sm:px-4 lg:px-6">
       <div className="flex items-center gap-2 sm:gap-4 w-full">
-        {/* Left: Logo on mobile */}
-        <Link href={`/${type}/dashboard`} className="flex items-center gap-2 lg:hidden shrink-0">
+        {/* Left: Logo + Title */}
+        <Link href={`/${type}/dashboard`} className="flex items-center gap-2 shrink-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Printer className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold">PrintQ</span>
+          <span className="text-lg font-bold hidden sm:inline">PrintQ</span>
         </Link>
-
-        {/* Left: Title on mobile, hidden on desktop (sidebar provides context) */}
         <div className="md:hidden flex-1 min-w-0">
           <h1 className="text-base font-semibold truncate">{title}</h1>
         </div>
