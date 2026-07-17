@@ -27,8 +27,7 @@ import { createPaymentIntentAction } from "@/lib/actions/payment.actions"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const { uploadFiles } = genUploader<UploadRouter>({
   url: "/api/uploadthing",
@@ -357,6 +356,21 @@ function CustomerUploadContent() {
     }
 
     setPaymentChoiceLoading(true)
+
+    let stripeInstance
+    try {
+      stripeInstance = await stripePromise
+    } catch {
+      toast.error("Payment system failed to load. Please try again or use Pay Later.")
+      setPaymentChoiceLoading(false)
+      return
+    }
+    if (!stripeInstance) {
+      toast.error("Payment system unavailable. Please try Pay Later or refresh.")
+      setPaymentChoiceLoading(false)
+      return
+    }
+
     const paymentResult = await createPaymentIntentAction(paymentAmount)
     setPaymentChoiceLoading(false)
     if (paymentResult.error) {
