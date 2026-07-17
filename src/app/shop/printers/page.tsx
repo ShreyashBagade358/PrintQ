@@ -289,11 +289,11 @@ export default function ShopPrintersPage() {
                         className="space-y-4"
                       >
                         <div>
-                          <label className="text-sm font-medium">Name</label>
+                          <label className="text-sm font-medium">Name <span className="text-red-500">*</span></label>
                           <Input name="name" required placeholder="e.g. HP LaserJet Pro M404" />
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Model</label>
+                          <label className="text-sm font-medium">Model <span className="text-red-500">*</span></label>
                           <Input name="model" required placeholder="e.g. M404dn" />
                         </div>
                         <div>
