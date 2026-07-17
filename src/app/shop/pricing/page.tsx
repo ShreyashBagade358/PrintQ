@@ -15,8 +15,8 @@ const pricingRules = [
   { paperSize: "A4", colorType: "Color", pricePerPage: 10, minCopies: 1 },
   { paperSize: "A3", colorType: "Black & White", pricePerPage: 4, minCopies: 1 },
   { paperSize: "A3", colorType: "Color", pricePerPage: 20, minCopies: 1 },
-  { paperSize: "A5", colorType: "Black & White", pricePerPage: 1, minCopies: 5 },
-  { paperSize: "A5", colorType: "Color", pricePerPage: 5, minCopies: 5 },
+  { paperSize: "A5", colorType: "Black & White", pricePerPage: 2, minCopies: 1 },
+  { paperSize: "A5", colorType: "Color", pricePerPage: 5, minCopies: 1 },
 ]
 
 export default function ShopPricingPage() {
@@ -100,7 +100,7 @@ export default function ShopPricingPage() {
                   <h4 className="font-medium">Finishing Charges</h4>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input label="Stapling (₹)" type="number" defaultValue={5} />
-                    <Input label="Spiral Binding (₹)" type="number" defaultValue={50} />
+                    <Input label="Spiral Binding (₹)" type="number" defaultValue={2} />
                     <Input label="Hardcover Binding (₹)" type="number" defaultValue={150} />
                     <Input label="Lamination (₹)" type="number" defaultValue={20} />
                   </div>

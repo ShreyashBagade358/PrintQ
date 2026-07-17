@@ -27,7 +27,8 @@ import { createPaymentIntentAction } from "@/lib/actions/payment.actions"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null
 
 const { uploadFiles } = genUploader<UploadRouter>({
   url: "/api/uploadthing",
@@ -905,6 +906,20 @@ function PaymentFormComponent({ amount, onSuccess, onError, loading }: {
 }) {
   const stripe = useStripe()
   const elements = useElements()
+  const [stripeLoadError, setStripeLoadError] = useState(false)
+
+  useEffect(() => {
+    if (!stripe || !elements) {
+      const timer = setTimeout(() => {
+        if (!stripe || !elements) {
+          setStripeLoadError(true)
+        }
+      }, 15000)
+      return () => clearTimeout(timer)
+    } else {
+      setStripeLoadError(false)
+    }
+  }, [stripe, elements])
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -924,11 +939,33 @@ function PaymentFormComponent({ amount, onSuccess, onError, loading }: {
     }
   }
 
+  if (stripeLoadError) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+          Payment system failed to load. Check your internet connection or try again.
+        </div>
+        <Button
+          className="w-full h-12 text-base"
+          onClick={() => { setStripeLoadError(false); window.location.reload() }}
+          variant="outline"
+        >
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handlePayment} className="space-y-5">
       <PaymentElement />
-      <Button type="submit" className="w-full h-12 text-base" disabled={!stripe || !elements} loading={loading}>
-        Pay {formatCurrency(amount)}
+      <Button
+        type="submit"
+        className="w-full h-12 text-base"
+        disabled={!stripe || !elements}
+        loading={loading || !stripe || !elements}
+      >
+        {!stripe || !elements ? "Loading payment..." : `Pay ${formatCurrency(amount)}`}
       </Button>
     </form>
   )
