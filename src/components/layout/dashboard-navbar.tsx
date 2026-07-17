@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getUnreadNotificationCountAction } from "@/lib/actions/notification.actions"
 import { TutorialButton } from "@/components/onboarding/tutorial-button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 interface DashboardNavbarProps {
   title?: string
@@ -62,6 +63,7 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
 
         {/* Right: Icons */}
         <div className="flex items-center gap-1 sm:gap-3">
+        <ThemeToggle />
         <TutorialButton />
         <Link href={notifPath}>
           <Button variant="ghost" size="icon" className="relative">

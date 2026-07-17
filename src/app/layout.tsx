@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Providers } from "@/components/providers/session-provider"
 import { Toaster } from "sonner"
+import { ThemeProvider } from "next-themes"
 import "./globals.css"
 
 const inter = Inter({
@@ -29,12 +30,15 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full">
-        <Providers>
-          {children}
-          <Toaster richColors closeButton />
-        </Providers>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <Providers>
+            {children}
+            <Toaster richColors closeButton />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   )
