@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -160,11 +158,7 @@ export default function ShopReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Reports" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <div className="flex flex-wrap gap-2 border-b pb-4">
             {([{ k: "monthly", l: "Monthly Sales" }, { k: "orders", l: "Order Summary" }, { k: "customers", l: "Customers" }, { k: "custom", l: "Custom Report" }] as const).map(({ k, l }) => (
               <Button key={k} variant={tab === k ? "default" : "outline"} size="sm" onClick={() => setTab(k)}>{l}</Button>
@@ -426,8 +420,6 @@ export default function ShopReportsPage() {
               )}
             </motion.div>
           )}
-        </main>
-      </div>
     </div>
   )
 }

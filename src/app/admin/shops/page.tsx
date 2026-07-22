@@ -1,8 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,90 +17,84 @@ const shops = [
 
 export default function AdminShopsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Shop Management" type="admin" />
-      <div className="flex">
-        <Sidebar type="admin" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-          >
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search shops..." className="pl-9" />
-            </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" /> Filter
-            </Button>
-          </motion.div>
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+      >
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search shops..." className="pl-9" />
+        </div>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Filter className="h-4 w-4" /> Filter
+        </Button>
+      </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Shop Name</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Orders</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {shops.map((shop) => (
-                      <TableRow key={shop.id}>
-                        <TableCell className="font-medium">{shop.name}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p>{shop.owner}</p>
-                            <p className="text-xs text-muted-foreground">{shop.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{shop.plan}</TableCell>
-                        <TableCell>{shop.orders}</TableCell>
-                        <TableCell>{shop.revenue}</TableCell>
-                        <TableCell><StatusBadge status={shop.status} /></TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Eye className="h-4 w-4" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Shop Name</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {shops.map((shop) => (
+                  <TableRow key={shop.id}>
+                    <TableCell className="font-medium">{shop.name}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p>{shop.owner}</p>
+                        <p className="text-xs text-muted-foreground">{shop.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{shop.plan}</TableCell>
+                    <TableCell>{shop.orders}</TableCell>
+                    <TableCell>{shop.revenue}</TableCell>
+                    <TableCell><StatusBadge status={shop.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {shop.status === "pending" && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600">
+                              <CheckCircle className="h-4 w-4" />
                             </Button>
-                            {shop.status === "pending" && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600">
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                            {shop.status === "active" && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table></div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </main>
-      </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600">
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        {shop.status === "active" && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table></div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   )
 }

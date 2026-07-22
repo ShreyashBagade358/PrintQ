@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -138,12 +136,7 @@ function TrackOrderContent() {
   const timelineSteps = order ? getTimelineSteps(order.status, order.queueItems, order.createdAt) : []
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Track Order" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64">
-          <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -267,9 +260,6 @@ function TrackOrderContent() {
                 </Card>
               </motion.div>
             )}
-          </div>
-        </main>
-      </div>
     </div>
   )
 }
@@ -277,14 +267,8 @@ function TrackOrderContent() {
 export default function TrackOrderPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Track Order" type="customer" />
-        <div className="flex">
-          <Sidebar type="customer" />
-          <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </main>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     }>
       <TrackOrderContent />

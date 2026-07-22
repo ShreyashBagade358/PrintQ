@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -120,27 +118,15 @@ export default function ShopQueuePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Active Queue" type="shop" />
-        <div className="flex">
-          <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-full max-w-64" />
-              <div className="h-64 bg-muted rounded" />
-            </div>
-          </main>
-        </div>
+      <div className="animate-pulse space-y-4">
+        <div className="h-10 bg-muted rounded w-full max-w-64" />
+        <div className="h-64 bg-muted rounded" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Active Queue" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,8 +272,6 @@ export default function ShopQueuePage() {
                 </CardContent>
             </Card>
           </motion.div>
-        </main>
       </div>
-    </div>
   )
 }

@@ -1,7 +1,5 @@
 "use client"
 
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,11 +8,7 @@ import { MessageSquare, HelpCircle, FileText } from "lucide-react"
 
 export default function CustomerSupportPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Support" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-3">
             {[
               { icon: MessageSquare, title: "Live Chat", desc: "Chat with our team" },
@@ -41,8 +35,6 @@ export default function CustomerSupportPage() {
               <Button>Submit Ticket</Button>
             </CardContent>
           </Card>
-        </main>
-      </div>
     </div>
   )
 }

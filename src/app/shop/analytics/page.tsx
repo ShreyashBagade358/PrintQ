@@ -1,8 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { IndianRupee, ShoppingCart, FileText, TrendingUp, TrendingDown } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
@@ -25,11 +23,7 @@ export default function ShopAnalyticsPage() {
   const maxRevenue = Math.max(...monthlyRevenue)
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Analytics" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, index) => {
               const Icon = stat.icon
@@ -218,8 +212,6 @@ export default function ShopAnalyticsPage() {
               </Card>
             </motion.div>
           </div>
-        </main>
-      </div>
     </div>
   )
 }

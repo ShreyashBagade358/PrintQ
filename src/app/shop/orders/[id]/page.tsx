@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -262,19 +260,11 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Order Details" type="shop" />
-        <div className="flex">
-          <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-64" />
-              <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2 h-96 bg-muted rounded" />
-                <div className="h-96 bg-muted rounded" />
-              </div>
-            </div>
-          </main>
+      <div className="animate-pulse space-y-4">
+        <div className="h-10 bg-muted rounded w-64" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-96 bg-muted rounded" />
+          <div className="h-96 bg-muted rounded" />
         </div>
       </div>
     )
@@ -282,27 +272,16 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Order Details" type="shop" />
-        <div className="flex">
-          <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="font-medium">Order not found</p>
-              <Link href="/shop/orders" className="text-sm text-primary hover:underline mt-2 inline-block">&larr; Back to Orders</Link>
-            </div>
-          </main>
-        </div>
+      <div className="text-center py-16 text-muted-foreground">
+        <p className="font-medium">Order not found</p>
+        <Link href="/shop/orders" className="text-sm text-primary hover:underline mt-2 inline-block">&larr; Back to Orders</Link>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title={`Order ${order.orderId}`} type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <>
+    <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -850,9 +829,7 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
               </motion.div>
             </div>
           </div>
-        </main>
       </div>
-
       <Dialog open={!!previewFile} onOpenChange={(o) => { if (!o) setPreviewFile(null) }}>
         <DialogContent className={previewFile?.type?.includes("pdf") ? "sm:max-w-4xl" : "sm:max-w-2xl"}>
           <DialogHeader>
@@ -920,6 +897,6 @@ export default function OperatorOrderDetailPage({ params }: { params: Promise<{ 
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { IndianRupee, ShoppingCart, FileText, Clock, TrendingUp, TrendingDown, QrCode } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -65,31 +63,20 @@ export default function ShopDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Dashboard" type="shop" />
-        <div className="flex">
-          <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="animate-pulse space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-28 bg-muted rounded-lg" />
-                ))}
-              </div>
-              <div className="h-64 bg-muted rounded-lg" />
-            </div>
-          </main>
+      <div className="animate-pulse space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-muted rounded-lg" />
+          ))}
         </div>
+        <div className="h-64 bg-muted rounded-lg" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Dashboard" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <>
+    <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="shop-stats">
             {statCards.map((stat, index) => {
               const Icon = stat.icon
@@ -221,9 +208,8 @@ export default function ShopDashboardPage() {
               )}
             </CardContent>
           </Card>
-        </main>
-      </div>
+        </div>
       <TutorialProvider />
-    </div>
+    </>
   )
 }

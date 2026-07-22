@@ -1,8 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, ArrowRight, Share2, Upload, Printer } from "lucide-react"
@@ -10,12 +8,7 @@ import Link from "next/link"
 
 export default function UploadSuccessPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Order Submitted" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-          <div className="mx-auto max-w-lg py-12">
+    <div className="mx-auto max-w-lg py-12">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -76,9 +69,6 @@ export default function UploadSuccessPage() {
                 </Button>
               </div>
             </motion.div>
-          </div>
-        </main>
-      </div>
     </div>
   )
 }

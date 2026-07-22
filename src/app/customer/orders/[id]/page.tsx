@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, use } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Badge } from "@/components/ui/badge"
@@ -115,44 +113,25 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Order Details" type="customer" />
-        <div className="flex">
-          <Sidebar type="customer" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          </main>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Order Details" type="customer" />
-        <div className="flex">
-          <Sidebar type="customer" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="text-center py-16 text-muted-foreground space-y-4">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
-              <p className="font-medium">Order not found</p>
-              <Link href="/customer/orders" className="text-sm text-primary hover:underline inline-block">&larr; Back to Orders</Link>
-            </div>
-          </main>
-        </div>
+      <div className="text-center py-16 text-muted-foreground space-y-4">
+        <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
+        <p className="font-medium">Order not found</p>
+        <Link href="/customer/orders" className="text-sm text-primary hover:underline inline-block">&larr; Back to Orders</Link>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title={`Order ${order.orderId}`} type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <>
+    <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -443,9 +422,7 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
               </motion.div>
             </div>
           </div>
-        </main>
-      </div>
-
+        </div>
       <Dialog open={!!previewFile} onOpenChange={(o) => { if (!o) setPreviewFile(null) }}>
         <DialogContent className={previewFile?.type?.includes("pdf") ? "sm:max-w-4xl" : "sm:max-w-2xl"}>
           <DialogHeader>
@@ -513,6 +490,6 @@ export default function CustomerOrderDetailPage({ params }: { params: Promise<{ 
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

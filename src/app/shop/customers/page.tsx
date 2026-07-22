@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,42 +63,39 @@ export default function ShopCustomersPage() {
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(amount)
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Customers" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-          >
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search customers..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <Button className="gap-2" onClick={() => setShowAdd(true)}>
-              <Plus className="h-4 w-4" /> Add Customer
-            </Button>
-          </motion.div>
+    <>
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+        >
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search customers..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Button className="gap-2" onClick={() => setShowAdd(true)}>
+            <Plus className="h-4 w-4" /> Add Customer
+          </Button>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>All Customers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-                ) : customers.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-10">No customers found.</p>
-                  ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>All Customers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : customers.length === 0 ? (
+                <p className="text-center text-muted-foreground py-10">No customers found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Customer</TableHead>
@@ -136,11 +131,10 @@ export default function ShopCustomersPage() {
                     </TableBody>
                   </Table>
                 </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        </main>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
@@ -160,6 +154,6 @@ export default function ShopCustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

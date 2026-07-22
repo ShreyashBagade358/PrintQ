@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Bell, CheckCheck, Loader2, Inbox } from "lucide-react"
@@ -60,11 +58,7 @@ export default function CustomerNotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Notifications" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
+    <div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">Notifications</h2>
@@ -133,8 +127,6 @@ export default function CustomerNotificationsPage() {
               </CardContent>
             </Card>
           )}
-        </main>
-      </div>
     </div>
   )
 }

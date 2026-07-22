@@ -1,8 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,11 +11,7 @@ import { Save, Upload, Shield, Bell, Eye } from "lucide-react"
 
 export default function ShopSettingsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Settings" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
+    <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,8 +160,6 @@ export default function ShopSettingsPage() {
               </TabsContent>
             </Tabs>
           </motion.div>
-        </main>
-      </div>
     </div>
   )
 }

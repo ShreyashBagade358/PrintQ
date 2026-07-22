@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -175,11 +173,7 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <DashboardNavbar title="Profile" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 md:ml-16 lg:ml-64">
+    <div>
           {loading ? (
             <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
@@ -412,9 +406,6 @@ export default function CustomerProfilePage() {
               </div>
             </motion.div>
           )}
-        </main>
-      </div>
-
       <Dialog open={show2FADialog} onOpenChange={setShow2FADialog}>
         <DialogContent>
           <DialogHeader>

@@ -2,8 +2,6 @@
 
 import { useState, useRef, useCallback, useEffect, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -391,12 +389,8 @@ function CustomerUploadContent() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Print Settings" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-4 lg:p-8 md:ml-16 lg:ml-64">
-          <div className="mx-auto max-w-5xl space-y-6">
+    <>
+    <div className="mx-auto max-w-5xl space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -782,9 +776,6 @@ function CustomerUploadContent() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
-
       <Dialog open={showPaymentChoice} onOpenChange={(o) => { if (!o) { setShowPaymentChoice(false) } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -907,7 +898,7 @@ function CustomerUploadContent() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
 

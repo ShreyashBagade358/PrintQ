@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { IndianRupee, ShoppingCart, FileText, Clock, TrendingUp, ArrowRight, QrCode, ScanLine, Store, ExternalLink, Loader2 } from "lucide-react"
 import Link from "next/link"
@@ -70,11 +68,7 @@ export default function CustomerDashboardPage() {
   ] : []
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Dashboard" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
@@ -191,8 +185,6 @@ export default function CustomerDashboardPage() {
             <TutorialProvider />
             </>
           )}
-        </main>
-      </div>
     </div>
   )
 }

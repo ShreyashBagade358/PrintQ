@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -155,31 +153,19 @@ export default function ShopPrintersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar title="Printers" type="shop" />
-        <div className="flex">
-          <Sidebar type="shop" />
-          <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-            <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-full max-w-64" />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-48 bg-muted rounded-lg" />
-                ))}
-              </div>
-            </div>
-          </main>
+      <div className="animate-pulse space-y-4">
+        <div className="h-10 bg-muted rounded w-full max-w-64" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-48 bg-muted rounded-lg" />
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Printers" type="shop" />
-      <div className="flex">
-        <Sidebar type="shop" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -448,8 +434,6 @@ export default function ShopPrintersPage() {
               ))}
             </div>
           )}
-        </main>
       </div>
-    </div>
   )
 }

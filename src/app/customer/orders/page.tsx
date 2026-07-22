@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,12 +45,7 @@ export default function CustomerOrdersPage() {
   )
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="My Orders" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64">
-          <div className="space-y-6">
+    <div className="space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -124,9 +117,6 @@ export default function CustomerOrdersPage() {
                 </CardContent>
               </Card>
             </motion.div>
-          </div>
-        </main>
-      </div>
     </div>
   )
 }

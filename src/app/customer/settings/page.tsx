@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
-import { Sidebar } from "@/components/layout/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
@@ -47,11 +45,7 @@ export default function CustomerSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavbar title="Settings" type="customer" />
-      <div className="flex">
-        <Sidebar type="customer" />
-        <main className="flex-1 p-6 lg:p-8 md:ml-16 lg:ml-64 space-y-6">
+    <div className="space-y-6">
           <Card>
             <CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -77,8 +71,6 @@ export default function CustomerSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </main>
-      </div>
     </div>
   )
 }
