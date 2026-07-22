@@ -26,7 +26,7 @@ export default async function ScanTokenPage({ params }: Props) {
             <h1 className="text-2xl font-bold">Invalid QR Code</h1>
             <p className="text-muted-foreground">{result.error || "This QR code could not be verified."}</p>
             <div className="pt-2 space-y-2">
-              <Link href="/scan"><Button variant="default" className="w-full gap-2"><QrCode className="h-4 w-4" /> Try Again</Button></Link>
+              <Link href="/customer/scan"><Button variant="default" className="w-full gap-2"><QrCode className="h-4 w-4" /> Try Again</Button></Link>
               <Link href="/public/landing"><Button variant="outline" className="w-full gap-2"><ArrowLeft className="h-4 w-4" /> Go Home</Button></Link>
             </div>
           </CardContent>

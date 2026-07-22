@@ -169,7 +169,7 @@ export default function CustomerDashboardPage() {
                         <FileText className="h-5 w-5" /> New Print Job
                       </Button>
                     </Link>
-                    <Link href="/scan">
+                    <Link href="/customer/scan">
                       <Button variant="outline" className="w-full gap-2" size="lg">
                         <ScanLine className="h-5 w-5" /> Scan Shop QR
                       </Button>

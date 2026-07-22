@@ -66,7 +66,7 @@ export const authConfig: NextAuthConfig = {
         return Response.redirect(new URL("/shop/dashboard", nextUrl))
       }
 
-      if (pathname.startsWith("/scan") && !isLoggedIn) {
+      if (pathname.startsWith("/customer/scan") && !isLoggedIn) {
         return Response.redirect(new URL("/auth/customer-login?callbackUrl=" + encodeURIComponent(pathname), nextUrl))
       }
 

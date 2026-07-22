@@ -49,7 +49,7 @@ const customerLinks = [
   { href: "/customer/upload", label: "Upload Job", icon: ClipboardList },
   { href: "/customer/orders", label: "My Orders", icon: ShoppingCart },
   { href: "/customer/track", label: "Track Order", icon: ClipboardList },
-  { href: "/scan", label: "Scan Shop QR", icon: ScanLine },
+  { href: "/customer/scan", label: "Scan Shop QR", icon: ScanLine },
   { href: "/customer/profile", label: "Profile", icon: UserCog },
   { href: "/customer/notifications", label: "Notifications", icon: Bell },
   { href: "/customer/support", label: "Support", icon: Users },
@@ -91,7 +91,7 @@ export function Sidebar({ type }: SidebarProps) {
           const isActive = pathname === link.href || pathname.startsWith(link.href + "/")
           const tourAttrs: Record<string, string> = {
             "/customer/upload": "customer-upload",
-            "/scan": "customer-scan",
+            "/customer/scan": "customer-scan",
             "/shop/queue": "shop-queue",
             "/shop/orders": "shop-orders-nav",
             "/shop/printers": "shop-printers",
