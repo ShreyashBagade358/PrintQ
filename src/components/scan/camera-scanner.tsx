@@ -58,7 +58,22 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
           }
         },
         () => {}
-      )
+      ).catch(async () => {
+        if (destroyRef.current || startedRef.current) return
+        await scanner.start(
+          { facingMode: "user" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            const token = extractToken(decodedText)
+            if (token) {
+              stopScanner().then(() => onScan(token))
+            } else {
+              onError?.("Could not read QR code. Please try again.")
+            }
+          },
+          () => {}
+        )
+      })
     } catch (e) {
       startedRef.current = false
       scannerRef.current = null
@@ -121,7 +136,7 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
 
 function extractToken(input: string): string | null {
   const trimmed = input.trim()
-  const urlPattern = /\/scan\/([A-Za-z0-9_=-]+)/
+  const urlPattern = /\/customer\/scan\/([A-Za-z0-9_=-]+)/
   const match = trimmed.match(urlPattern)
   if (match) return match[1]
   if (/^[A-Za-z0-9_=-]+$/.test(trimmed)) return trimmed
