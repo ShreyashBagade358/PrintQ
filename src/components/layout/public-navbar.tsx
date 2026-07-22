@@ -27,8 +27,6 @@ export function PublicNavbar() {
     ? "/shop/dashboard"
     : user?.role === "CUSTOMER"
     ? "/customer/dashboard"
-    : user?.role === "SUPER_ADMIN"
-    ? "/admin/dashboard"
     : "/"
 
   return (

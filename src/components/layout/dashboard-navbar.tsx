@@ -21,7 +21,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 interface DashboardNavbarProps {
   title?: string
-  type?: "shop" | "admin" | "customer"
+  type?: "shop" | "customer"
 }
 
 export function DashboardNavbar({ title = "Dashboard", type = "shop" }: DashboardNavbarProps) {
@@ -37,7 +37,7 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
 
   useEffect(() => { fetchCount() }, [fetchCount])
 
-  const notifPath = type === "admin" ? "/admin/notifications" : `/${type}/notifications`
+  const notifPath = `/${type}/notifications`
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-3 sm:px-4 lg:px-6">

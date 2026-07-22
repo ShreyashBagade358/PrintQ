@@ -45,7 +45,6 @@ export const authConfig: NextAuthConfig = {
       const role = auth?.user?.role as string | undefined
       const pathname = nextUrl.pathname
 
-      const adminRoutes = pathname.startsWith("/admin")
       const shopRoutes = pathname.startsWith("/shop")
       const customerRoutes = pathname.startsWith("/customer")
       const authRoutes = pathname.startsWith("/auth")
@@ -53,13 +52,8 @@ export const authConfig: NextAuthConfig = {
       if (authRoutes && isLoggedIn) {
         const home = role === "SHOP_OWNER" || role === "STAFF" ? "/shop/dashboard"
           : role === "CUSTOMER" ? "/customer/dashboard"
-          : role === "SUPER_ADMIN" ? "/admin/dashboard"
           : "/"
         return Response.redirect(new URL(home, nextUrl))
-      }
-
-      if (adminRoutes && (!isLoggedIn || role !== "SUPER_ADMIN")) {
-        return Response.redirect(new URL(isLoggedIn ? "/" : "/auth/login", nextUrl))
       }
 
       if (shopRoutes && (!isLoggedIn || (role !== "SHOP_OWNER" && role !== "STAFF"))) {

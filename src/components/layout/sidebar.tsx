@@ -44,22 +44,6 @@ const shopLinks = [
   { href: "/shop/settings", label: "Settings", icon: Settings },
 ]
 
-const adminLinks = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/shops", label: "Shops", icon: Printer },
-  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
-  { href: "/admin/cms", label: "CMS", icon: FileText },
-  { href: "/admin/blog", label: "Blog", icon: Megaphone },
-  { href: "/admin/help", label: "Help Articles", icon: ClipboardList },
-  { href: "/admin/tickets", label: "Tickets", icon: ClipboardList },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { href: "/admin/coupons", label: "Coupons", icon: DollarSign },
-  { href: "/admin/payments", label: "Payments", icon: Receipt },
-  { href: "/admin/activity", label: "Activity", icon: ClipboardList },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-]
-
 const customerLinks = [
   { href: "/customer/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customer/upload", label: "Upload Job", icon: ClipboardList },
@@ -73,14 +57,14 @@ const customerLinks = [
 ]
 
 interface SidebarProps {
-  type: "shop" | "admin" | "customer"
+  type: "shop" | "customer"
 }
 
 export function Sidebar({ type }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
 
-  const links = type === "shop" ? shopLinks : type === "admin" ? adminLinks : customerLinks
+  const links = type === "shop" ? shopLinks : customerLinks
 
   return (
     <aside

@@ -64,8 +64,6 @@ export async function loginAction(_prevState: unknown, formData: FormData) {
       ? "/shop/dashboard"
       : user?.role === "CUSTOMER"
       ? "/customer/dashboard"
-      : user?.role === "SUPER_ADMIN"
-      ? "/admin/dashboard"
       : "/"
 
     return { success: true, redirect }
