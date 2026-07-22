@@ -38,7 +38,7 @@ export function QrDisplay() {
 
   useEffect(() => {
     if (!data?.qrToken) return
-    const scanUrl = `${window.location.origin}/scan/${data.qrToken}`
+    const scanUrl = `${window.location.origin}/customer/scan/${data.qrToken}`
     import("qrcode").then((qr) => {
       qr.toDataURL(scanUrl, {
         width: 400,
@@ -59,7 +59,7 @@ export function QrDisplay() {
 
   const handleCopyLink = async () => {
     if (!data?.qrToken) return
-    const scanUrl = `${window.location.origin}/scan/${data.qrToken}`
+    const scanUrl = `${window.location.origin}/customer/scan/${data.qrToken}`
     await navigator.clipboard.writeText(scanUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -120,7 +120,7 @@ export function QrDisplay() {
                 <Key className="h-4 w-4" /> Token: {data?.qrToken.slice(0, 6)}...
               </Button>
               <Button variant="outline" size="sm" onClick={() => {
-                const url = `${window.location.origin}/scan/${data?.qrToken}`
+                const url = `${window.location.origin}/customer/scan/${data?.qrToken}`
                 if (navigator.share) navigator.share({ title: `${data?.shopName} - PrintQ`, url })
                 else handleCopyLink()
               }} className="gap-2">

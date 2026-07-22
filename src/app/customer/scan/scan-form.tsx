@@ -24,7 +24,7 @@ export function ScanForm() {
     setLoading(true)
     try {
       const path = extractToken(val)
-      router.push(`/scan/${path}`)
+      router.push(`/customer/scan/${path}`)
     } catch {
       toast.error("Invalid QR code format")
       setLoading(false)
@@ -38,7 +38,7 @@ export function ScanForm() {
       try {
         const path = extractToken(text)
         setLoading(true)
-        router.push(`/scan/${path}`)
+        router.push(`/customer/scan/${path}`)
       } catch {
         toast.error("Clipboard content is not a valid QR code")
       }
@@ -47,7 +47,7 @@ export function ScanForm() {
 
   const handleCameraScan = (token: string) => {
     setLoading(true)
-    router.push(`/scan/${token}`)
+    router.push(`/customer/scan/${token}`)
   }
 
   const handleCameraError = (error: string) => {
@@ -120,7 +120,7 @@ export function ScanForm() {
 
 function extractToken(input: string): string {
   const trimmed = input.trim()
-  const urlPattern = /\/scan\/([A-Za-z0-9_-]+)$/
+  const urlPattern = /\/customer\/scan\/([A-Za-z0-9_-]+)$/
   const match = trimmed.match(urlPattern)
   if (match) return match[1]
   if (/^[A-Za-z0-9_-]+$/.test(trimmed)) return trimmed

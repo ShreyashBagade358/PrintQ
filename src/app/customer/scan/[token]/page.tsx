@@ -38,7 +38,7 @@ export default async function ScanTokenPage({ params }: Props) {
   const shop = result.shop
 
   if (!session?.user) {
-    const callbackUrl = `/scan/${token}`
+    const callbackUrl = `/customer/scan/${token}`
     redirect(`/auth/customer-login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
   }
 
@@ -52,7 +52,7 @@ export default async function ScanTokenPage({ params }: Props) {
             </div>
             <h1 className="text-2xl font-bold">Wrong Account Type</h1>
             <p className="text-muted-foreground">Please sign in as a customer to connect with this shop.</p>
-            <Link href={`/auth/customer-login?callbackUrl=${encodeURIComponent(`/scan/${token}`)}`}>
+            <Link href={`/auth/customer-login?callbackUrl=${encodeURIComponent(`/customer/scan/${token}`)}`}>
               <Button className="w-full">Sign in as Customer</Button>
             </Link>
           </CardContent>

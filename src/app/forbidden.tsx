@@ -15,9 +15,9 @@ export default function Forbidden() {
           You don&apos;t have permission to access this page.
         </p>
         <div className="flex gap-3 justify-center">
-          <Link href="/auth/login">
+          <Link href="/public/landing">
             <Button variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Sign In
+              <ArrowLeft className="h-4 w-4" /> Go Home
             </Button>
           </Link>
           <Link href="/public/landing">
