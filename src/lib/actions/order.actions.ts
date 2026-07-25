@@ -34,7 +34,12 @@ export async function createOrderAction(_prevState: unknown, formData: FormData)
   })
   if (!shop) return { error: "No shop found" }
 
-  const data = JSON.parse(formData.get("data") as string)
+  let data: unknown
+  try {
+    data = JSON.parse(formData.get("data") as string)
+  } catch {
+    return { error: "Invalid form data" }
+  }
   const validated = createOrderSchema.safeParse(data)
   if (!validated.success) return { error: validated.error.errors[0].message }
 
@@ -157,6 +162,11 @@ export async function getOrdersAction(shopId: string, status?: string) {
   const session = await auth()
   if (!session?.user) return []
 
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop || shop.id !== shopId) return []
+
   const where: Record<string, unknown> = { shopId }
   if (status && status !== "all") where.status = status
 
@@ -171,7 +181,7 @@ export async function getOrderDetailAction(orderId: string) {
   const session = await auth()
   if (!session?.user) return null
 
-  return prisma.order.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       customer: true,
@@ -179,4 +189,13 @@ export async function getOrderDetailAction(orderId: string) {
       queueItems: { include: { printer: true } },
     },
   })
+
+  if (!order) return null
+
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop || order.shopId !== shop.id) return null
+
+  return order
 }

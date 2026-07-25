@@ -13,6 +13,10 @@ export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  if (session.user.role !== "SHOP_OWNER" && session.user.role !== "STAFF") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const { searchParams } = new URL(req.url)
   const action = searchParams.get("action") || "discover"
   const printerName = searchParams.get("printer")
@@ -36,9 +40,9 @@ export async function GET(req: NextRequest) {
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 })
     }
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Internal error" },
+      { error: "Internal error" },
       { status: 500 },
     )
   }
@@ -47,6 +51,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  if (session.user.role !== "SHOP_OWNER" && session.user.role !== "STAFF") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   try {
     const body = await req.json()
@@ -86,9 +94,9 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 })
     }
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Internal error" },
+      { error: "Internal error" },
       { status: 500 },
     )
   }

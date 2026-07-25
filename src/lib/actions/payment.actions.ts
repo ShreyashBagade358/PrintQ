@@ -8,6 +8,10 @@ export async function createPaymentIntentAction(amount: number, orderId?: string
   const session = await auth()
   if (!session?.user) return { error: "Unauthorized" }
 
+  if (typeof amount !== "number" || amount <= 0 || amount > 1000000) {
+    return { error: "Invalid amount" }
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
 
@@ -37,15 +41,23 @@ export async function createPaymentIntentAction(amount: number, orderId?: string
     })
 
     return { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id }
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Payment failed" }
+  } catch {
+    return { error: "Payment failed" }
   }
 }
 
 export async function confirmOrderPaymentAction(paymentIntentId: string) {
+  const session = await auth()
+  if (!session?.user) return { error: "Unauthorized" }
+
   try {
     const stripe = getStripeInstance()
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+
+    if (paymentIntent.metadata.userId !== session.user.id && session.user.role !== "SHOP_OWNER") {
+      return { error: "Unauthorized" }
+    }
+
     return { status: paymentIntent.status }
   } catch {
     return { error: "Failed to confirm payment" }

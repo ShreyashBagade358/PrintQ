@@ -37,7 +37,12 @@ export async function saveOperatorSettingsAction(orderId: string, _prevState: un
   })
   if (!shop || order.shopId !== shop.id) return { error: "Unauthorized" }
 
-  const raw = JSON.parse(formData.get("data") as string)
+  let raw: unknown
+  try {
+    raw = JSON.parse(formData.get("data") as string)
+  } catch {
+    return { error: "Invalid settings data" }
+  }
   const validated = operatorSettingsSchema.safeParse(raw)
   if (!validated.success) return { error: validated.error.errors[0].message }
 
@@ -123,10 +128,10 @@ export async function startPrintWithSettingsAction(orderId: string, queueItemId:
         if (result.success) {
           printResults.push(`${file.name}: job ${result.jobId}`)
         } else {
-          printResults.push(`${file.name}: failed (${result.error})`)
+          printResults.push(`${file.name}: failed`)
         }
-      } catch (e) {
-        printResults.push(`${file.name}: error (${e instanceof Error ? e.message : "Unknown"})`)
+      } catch {
+        printResults.push(`${file.name}: error`)
       }
     }
     await prisma.order.update({

@@ -4,7 +4,6 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import { createNotificationAction } from "./notification.actions"
 
 const addPrinterSchema = z.object({
   name: z.string().min(1),
@@ -42,7 +41,11 @@ export async function addPrinterAction(_prevState: unknown, formData: FormData) 
   }
   for (const [key, value] of formData.entries()) {
     if (key === "paperSizes") {
-      raw[key] = JSON.parse(value as string)
+      try {
+        raw[key] = JSON.parse(value as string)
+      } catch {
+        return { error: "Invalid paper sizes data" }
+      }
     } else if (key === "colorCapable" || key === "duplexCapable") {
       raw[key] = value === "true"
     } else {

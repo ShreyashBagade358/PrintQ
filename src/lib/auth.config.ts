@@ -3,42 +3,49 @@ import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 
-export const authConfig: NextAuthConfig = {
-  providers: [
+const providers: NextAuthConfig["providers"] = [
+  Credentials({
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
+    authorize: async (credentials) => {
+      const { email, password } = credentials as {
+        email: string
+        password: string
+      }
+
+      const { prisma } = await import("@/lib/prisma")
+      const user = await prisma.user.findUnique({ where: { email } })
+
+      if (!user || !user.password) return null
+      if (!user.emailVerified) return null
+
+      const isValid = await bcrypt.compare(password, user.password)
+      if (!isValid) return null
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        role: user.role,
+      }
+    },
+  }),
+]
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.unshift(
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      authorize: async (credentials) => {
-        const { email, password } = credentials as {
-          email: string
-          password: string
-        }
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  )
+}
 
-        const { prisma } = await import("@/lib/prisma")
-        const user = await prisma.user.findUnique({ where: { email } })
-
-        if (!user || !user.password) return null
-        if (!user.emailVerified) return null
-
-        const isValid = await bcrypt.compare(password, user.password)
-        if (!isValid) return null
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          role: user.role,
-        }
-      },
-    }),
-  ],
+export const authConfig: NextAuthConfig = {
+  providers,
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user

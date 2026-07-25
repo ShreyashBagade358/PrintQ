@@ -74,7 +74,12 @@ export async function getShopOrderDetailAction(orderId: string) {
   const session = await auth()
   if (!session?.user) return null
 
-  return prisma.order.findUnique({
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop) return null
+
+  const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       customer: true,
@@ -82,4 +87,8 @@ export async function getShopOrderDetailAction(orderId: string) {
       queueItems: { include: { printer: true }, orderBy: { createdAt: "asc" } },
     },
   })
+
+  if (!order || order.shopId !== shop.id) return null
+
+  return order
 }

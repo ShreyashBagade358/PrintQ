@@ -22,6 +22,14 @@ export async function markNotificationReadAction(notificationId: string) {
   const session = await auth()
   if (!session?.user) return { error: "Unauthorized" }
 
+  const notification = await prisma.notification.findUnique({
+    where: { id: notificationId },
+    select: { userId: true },
+  })
+  if (!notification || notification.userId !== session.user.id) {
+    return { error: "Notification not found" }
+  }
+
   await prisma.notification.update({
     where: { id: notificationId },
     data: { read: true },

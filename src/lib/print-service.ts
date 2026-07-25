@@ -1,10 +1,10 @@
-import { exec } from "child_process"
+import { execFile } from "child_process"
 import { promisify } from "util"
 import fs from "fs/promises"
 import path from "path"
 import os from "os"
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 export interface SystemPrinter {
   name: string
@@ -50,14 +50,24 @@ async function ensureTempDir() {
 
 async function downloadFile(url: string, destPath: string): Promise<void> {
   const response = await fetch(url)
-  if (!response.ok) throw new Error(`Failed to download file: ${response.statusText}`)
+  if (!response.ok) throw new Error("Failed to download file")
   const buffer = Buffer.from(await response.arrayBuffer())
   await fs.writeFile(destPath, buffer)
 }
 
+function sanitizePrintInput(input: string): string {
+  return input.replace(/[\x00-\x1f\x7f"'`\\]/g, "")
+}
+
+const VALID_SIDES = ["one-sided", "two-sided-long-edge", "two-sided-short-edge"]
+const VALID_COLOR_MODES = ["auto", "color", "grayscale", "monochrome"]
+const VALID_ORIENTATIONS = ["portrait", "landscape"]
+const VALID_PAPER_SIZES = ["A4", "A3", "A5", "Letter", "Legal", "Executive", "Tabloid", "B5", "JIS"]
+const VALID_PAPER_TRAYS = ["auto", "manual", "tray-1", "tray-2", "tray-3"]
+
 export async function discoverPrinters(): Promise<SystemPrinter[]> {
   try {
-    const { stdout } = await execAsync("lpstat -p -l 2>/dev/null || true")
+    const { stdout } = await execFileAsync("lpstat", ["-p", "-l"])
     const printers: SystemPrinter[] = []
     const lines = stdout.split("\n")
     let current: Partial<SystemPrinter> | null = null
@@ -138,80 +148,86 @@ export async function printFile(
 ): Promise<PrintJobResult> {
   await ensureTempDir()
 
+  const safeName = sanitizePrintInput(printerName)
+  if (!safeName) return { jobId: "", success: false, error: "Invalid printer name" }
+
   const ext = path.extname(fileName) || ".pdf"
   const localPath = path.join(TMP_DIR, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`)
 
   try {
     await downloadFile(fileUrl, localPath)
 
-    let cmd = `lp -d "${printerName}" "${localPath}"`
+    const args: string[] = ["-d", safeName, localPath]
 
     if (options?.copies && options.copies > 1) {
-      cmd += ` -n ${options.copies}`
+      const copies = Math.floor(options.copies)
+      if (copies > 0 && copies <= 999) args.push("-n", String(copies))
     }
 
-    if (options?.sides) {
-      cmd += ` -o sides=${options.sides}`
+    if (options?.sides && VALID_SIDES.includes(options.sides)) {
+      args.push("-o", `sides=${options.sides}`)
     }
 
     if (options?.color === false && !options?.colorMode) {
-      cmd += " -o ColorModel=Gray"
+      args.push("-o", "ColorModel=Gray")
     }
-    if (options?.colorMode) {
+    if (options?.colorMode && VALID_COLOR_MODES.includes(options.colorMode)) {
       const modeMap: Record<string, string> = {
         color: "ColorModel=Color",
         grayscale: "ColorModel=Gray",
         monochrome: "ColorModel=(Black)",
         auto: "ColorModel=Auto",
       }
-      cmd += ` -o ${modeMap[options.colorMode] || "ColorModel=Color"}`
+      args.push("-o", modeMap[options.colorMode])
     }
 
-    if (options?.paperSize) {
-      cmd += ` -o media=${options.paperSize}`
+    if (options?.paperSize && VALID_PAPER_SIZES.includes(options.paperSize)) {
+      args.push("-o", `media=${options.paperSize}`)
     }
 
-    if (options?.orientation === "landscape") {
-      cmd += " -o orientation-requested=4"
-    } else if (options?.orientation === "portrait") {
-      cmd += " -o orientation-requested=3"
+    if (options?.orientation && VALID_ORIENTATIONS.includes(options.orientation)) {
+      args.push("-o", `orientation-requested=${options.orientation === "landscape" ? "4" : "3"}`)
     }
 
     if (options?.pageRanges) {
-      cmd += ` -o page-ranges=${options.pageRanges}`
+      const safeRanges = sanitizePrintInput(options.pageRanges)
+      if (/^[\d,\-\s]+$/.test(safeRanges)) {
+        args.push("-o", `page-ranges=${safeRanges}`)
+      }
     }
 
-    if (options?.printQuality) {
-      cmd += ` -o print-quality=${options.printQuality}`
+    if (options?.printQuality && [3, 4, 5].includes(options.printQuality)) {
+      args.push("-o", `print-quality=${options.printQuality}`)
     }
 
-    if (options?.pagesPerSheet && options.pagesPerSheet > 1) {
-      cmd += ` -o number-up=${options.pagesPerSheet}`
+    if (options?.pagesPerSheet && options.pagesPerSheet > 1 && options.pagesPerSheet <= 16) {
+      args.push("-o", `number-up=${options.pagesPerSheet}`)
     }
 
     if (options?.fitToPage) {
-      cmd += " -o fit-to-page"
+      args.push("-o", "fit-to-page")
     }
 
     if (options?.scale && options.scale !== 100) {
-      cmd += ` -o scale=${options.scale}`
+      const scale = Math.max(25, Math.min(400, options.scale))
+      args.push("-o", `scale=${scale}`)
     }
 
-    if (options?.paperTray) {
-      cmd += ` -o InputSlot=${options.paperTray}`
+    if (options?.paperTray && VALID_PAPER_TRAYS.includes(options.paperTray)) {
+      args.push("-o", `InputSlot=${options.paperTray}`)
     }
 
     if (options?.brightness !== undefined) {
-      cmd += ` -o brightness=${options.brightness}`
+      const brightness = Math.max(-100, Math.min(100, options.brightness))
+      args.push("-o", `brightness=${brightness}`)
     }
 
     if (options?.contrast !== undefined) {
-      cmd += ` -o contrast=${options.contrast}`
+      const contrast = Math.max(-100, Math.min(100, options.contrast))
+      args.push("-o", `contrast=${contrast}`)
     }
 
-    cmd += " 2>&1"
-
-    const { stdout } = await execAsync(cmd)
+    const { stdout } = await execFileAsync("lp", args)
 
     const jobMatch = stdout.match(/request\s+id\s+is\s+(\S+)/i) ||
                      stdout.match(/job\s+id\s+[is]+\s+(\d+)/i) ||
@@ -221,11 +237,11 @@ export async function printFile(
       jobId: jobMatch?.[1] || "unknown",
       success: true,
     }
-  } catch (e) {
+  } catch {
     return {
       jobId: "",
       success: false,
-      error: e instanceof Error ? e.message : "Print failed",
+      error: "Print job failed",
     }
   } finally {
     try {
@@ -237,7 +253,9 @@ export async function printFile(
 
 export async function cancelPrintJob(jobId: string): Promise<boolean> {
   try {
-    await execAsync(`cancel ${jobId} 2>/dev/null || true`)
+    const safeJobId = sanitizePrintInput(jobId)
+    if (!safeJobId) return false
+    await execFileAsync("cancel", [safeJobId])
     return true
   } catch {
     return false
@@ -246,7 +264,9 @@ export async function cancelPrintJob(jobId: string): Promise<boolean> {
 
 export async function holdPrintJob(jobId: string): Promise<boolean> {
   try {
-    await execAsync(`lp -i ${jobId} -H hold 2>/dev/null || true`)
+    const safeJobId = sanitizePrintInput(jobId)
+    if (!safeJobId) return false
+    await execFileAsync("lp", ["-i", safeJobId, "-H", "hold"])
     return true
   } catch {
     return false
@@ -255,7 +275,9 @@ export async function holdPrintJob(jobId: string): Promise<boolean> {
 
 export async function resumePrintJob(jobId: string): Promise<boolean> {
   try {
-    await execAsync(`lp -i ${jobId} -H resume 2>/dev/null || true`)
+    const safeJobId = sanitizePrintInput(jobId)
+    if (!safeJobId) return false
+    await execFileAsync("lp", ["-i", safeJobId, "-H", "resume"])
     return true
   } catch {
     return false
@@ -264,7 +286,7 @@ export async function resumePrintJob(jobId: string): Promise<boolean> {
 
 export async function getPrintQueue(): Promise<{ jobId: string; user: string; jobName: string; status: string }[]> {
   try {
-    const { stdout } = await execAsync("lpq 2>/dev/null || echo ''")
+    const { stdout } = await execFileAsync("lpq", [])
     const jobs: { jobId: string; user: string; jobName: string; status: string }[] = []
     const lines = stdout.split("\n")
 
@@ -292,23 +314,29 @@ export async function addPrinterToSystem(
   model?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const modelPpd = model || "drv:///sample.drv/generic.ppd"
-    const cmd = `lpadmin -p "${name}" -E -v "${uri}" -m "${modelPpd}" 2>&1`
-    await execAsync(cmd)
-    await execAsync(`cupsenable "${name}" 2>/dev/null || true`)
-    await execAsync(`cupsaccept "${name}" 2>/dev/null || true`)
+    const safeName = sanitizePrintInput(name)
+    const safeUri = sanitizePrintInput(uri)
+    const safeModel = model ? sanitizePrintInput(model) : "drv:///sample.drv/generic.ppd"
+    if (!safeName || !safeUri) return { success: false, error: "Invalid printer name or URI" }
+
+    const args = ["-p", safeName, "-E", "-v", safeUri, "-m", safeModel]
+    await execFileAsync("lpadmin", args)
+    await execFileAsync("cupsenable", [safeName]).catch(() => {})
+    await execFileAsync("cupsaccept", [safeName]).catch(() => {})
     return { success: true }
-  } catch (e) {
+  } catch {
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Failed to add printer",
+      error: "Failed to add printer",
     }
   }
 }
 
 export async function removePrinterFromSystem(name: string): Promise<boolean> {
   try {
-    await execAsync(`lpadmin -x "${name}" 2>/dev/null || true`)
+    const safeName = sanitizePrintInput(name)
+    if (!safeName) return false
+    await execFileAsync("lpadmin", ["-x", safeName])
     return true
   } catch {
     return false
@@ -317,7 +345,9 @@ export async function removePrinterFromSystem(name: string): Promise<boolean> {
 
 export async function getPrinterOptions(name: string): Promise<Record<string, string[]>> {
   try {
-    const { stdout } = await execAsync(`lpoptions -p "${name}" -l 2>/dev/null || true`)
+    const safeName = sanitizePrintInput(name)
+    if (!safeName) return {}
+    const { stdout } = await execFileAsync("lpoptions", ["-p", safeName, "-l"])
     const options: Record<string, string[]> = {}
     for (const line of stdout.split("\n")) {
       const match = line.match(/^(\w+)\/(.+):\s+(.+)$/)

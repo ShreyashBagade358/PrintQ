@@ -151,9 +151,8 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
       // signIn may fail if session isn't ready; redirect anyway
     }
     return { success: true, redirect: "/shop/dashboard" }
-  } catch (e) {
-    console.error("Registration error:", e)
-    return { error: e instanceof Error ? e.message : "Registration failed. Please try again." }
+  } catch {
+    return { error: "Registration failed. Please try again." }
   }
 }
 
@@ -216,8 +215,7 @@ export async function customerRegisterAction(_prevState: unknown, formData: Form
       // signIn may fail if session isn't ready; redirect anyway
     }
     return { success: true, redirect: "/customer/dashboard" }
-  } catch (e) {
-    console.error("Customer registration error:", e)
-    return { error: e instanceof Error ? e.message : "Registration failed. Please try again." }
+  } catch {
+    return { error: "Registration failed. Please try again." }
   }
 }

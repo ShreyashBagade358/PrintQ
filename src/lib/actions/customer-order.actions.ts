@@ -37,7 +37,12 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
   const session = await auth()
   if (!session?.user) return { error: "Unauthorized" }
 
-  const raw = JSON.parse(formData.get("data") as string)
+  let raw: unknown
+  try {
+    raw = JSON.parse(formData.get("data") as string)
+  } catch {
+    return { error: "Invalid form data" }
+  }
   const validated = customerOrderSchema.safeParse(raw)
   if (!validated.success) return { error: validated.error.errors[0].message }
 
@@ -168,10 +173,16 @@ export async function getTrackOrderAction(orderId: string) {
   const order = await prisma.order.findUnique({
     where: { orderId },
     include: {
-      customer: true,
-      files: true,
+      files: { select: { id: true, name: true, size: true, pages: true, type: true } },
       queueItems: {
-        include: { printer: true },
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          completedAt: true,
+          createdAt: true,
+          printer: { select: { id: true, name: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -189,19 +200,13 @@ export async function getTrackOrderAction(orderId: string) {
     estimatedReadyAt: order.estimatedReadyAt?.toISOString() || null,
     completedAt: order.completedAt?.toISOString() || null,
     createdAt: order.createdAt.toISOString(),
-    customer: order.customer
-      ? { name: order.customer.name, email: order.customer.email, phone: order.customer.phone }
-      : null,
-    files: order.files.map((f) => ({
-      id: f.id, name: f.name, url: f.url, size: f.size, pages: f.pages, type: f.type,
-    })),
+    customer: null,
+    files: order.files,
     queueItems: order.queueItems.map((qi) => ({
-      id: qi.id,
-      status: qi.status,
+      ...qi,
       startedAt: qi.startedAt?.toISOString() || null,
       completedAt: qi.completedAt?.toISOString() || null,
       createdAt: qi.createdAt.toISOString(),
-      printer: qi.printer ? { id: qi.printer.id, name: qi.printer.name } : null,
     })),
   }
 }

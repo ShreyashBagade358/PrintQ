@@ -48,7 +48,7 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
 
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 },
         (decodedText) => {
           const token = extractToken(decodedText)
           if (token) {
@@ -62,7 +62,7 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
         if (destroyRef.current || startedRef.current) return
         await scanner.start(
           { facingMode: "user" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 },
           (decodedText) => {
             const token = extractToken(decodedText)
             if (token) {
@@ -103,8 +103,8 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
       <div
         id="qr-scanner-viewfinder"
         ref={containerRef}
-        className="relative overflow-hidden rounded-xl bg-black"
-        style={{ height: scanning ? 300 : 0, opacity: scanning ? 1 : 0 }}
+        className="relative overflow-hidden rounded-xl bg-black w-full"
+        style={{ height: scanning ? "min(70vw, 400px)" : 0, opacity: scanning ? 1 : 0, transition: "height 0.3s, opacity 0.3s" }}
       />
 
       <div className="flex gap-2">

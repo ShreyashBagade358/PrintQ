@@ -17,6 +17,15 @@ const updateShopSchema = z.object({
   autoDeleteDays: z.number().min(1).max(90).optional(),
 })
 
+const safeUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+  role: true,
+  createdAt: true,
+}
+
 export async function getShopAction() {
   const session = await auth()
   if (!session?.user) return null
@@ -24,7 +33,7 @@ export async function getShopAction() {
   return prisma.shop.findFirst({
     where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
     include: {
-      staff: { include: { user: true } },
+      staff: { include: { user: { select: safeUserSelect } } },
       printers: true,
       pricingRules: true,
       subscriptions: { include: { plan: true } },
@@ -63,7 +72,7 @@ export async function getStaffMembersAction() {
 
   return prisma.staff.findMany({
     where: { shopId: shop.id },
-    include: { user: true },
+    include: { user: { select: safeUserSelect } },
     orderBy: { createdAt: "desc" },
   })
 }
@@ -141,6 +150,11 @@ export async function removeStaffAction(staffId: string) {
 
   const shop = await prisma.shop.findFirst({ where: { ownerId: session.user.id } })
   if (!shop) return { error: "No shop found" }
+
+  const staffMember = await prisma.staff.findFirst({
+    where: { id: staffId, shopId: shop.id },
+  })
+  if (!staffMember) return { error: "Staff member not found" }
 
   await prisma.staff.delete({ where: { id: staffId } })
 
