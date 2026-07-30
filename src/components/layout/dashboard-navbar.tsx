@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect, useCallback } from "react"
-import { Bell, Search, Printer } from "lucide-react"
+import { Bell, Search, Printer, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -22,9 +22,10 @@ import { ThemeToggle } from "@/components/ui/theme-toggle"
 interface DashboardNavbarProps {
   title?: string
   type?: "shop" | "customer"
+  onMenuClick?: () => void
 }
 
-export function DashboardNavbar({ title = "Dashboard", type = "shop" }: DashboardNavbarProps) {
+export function DashboardNavbar({ title = "Dashboard", type = "shop", onMenuClick }: DashboardNavbarProps) {
   const { data: session } = useSession()
   const user = session?.user
   const initials = (user?.name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U"
@@ -49,7 +50,10 @@ export function DashboardNavbar({ title = "Dashboard", type = "shop" }: Dashboar
           </div>
           <span className="text-lg font-bold hidden sm:inline">PrintQ</span>
         </Link>
-        <div className="md:hidden flex-1 min-w-0">
+        <div className="md:hidden flex items-center gap-2 flex-1 min-w-0">
+          <Button variant="ghost" size="icon" onClick={onMenuClick} className="h-8 w-8 shrink-0">
+            <Menu className="h-5 w-5" />
+          </Button>
           <h1 className="text-base font-semibold truncate">{title}</h1>
         </div>
 

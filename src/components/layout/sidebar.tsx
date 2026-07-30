@@ -24,9 +24,10 @@ import {
   FileText,
   QrCode,
   ScanLine,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 
 const shopLinks = [
@@ -58,15 +59,91 @@ const customerLinks = [
 
 interface SidebarProps {
   type: "shop" | "customer"
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
-export function Sidebar({ type }: SidebarProps) {
+export function Sidebar({ type, mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
 
   const links = type === "shop" ? shopLinks : customerLinks
 
+  useEffect(() => {
+    if (mobileOpen) setCollapsed(false)
+  }, [mobileOpen])
+
   return (
+    <>
+    {/* Mobile overlay */}
+    {mobileOpen && (
+      <div className="fixed inset-0 z-40 md:hidden" onClick={onMobileClose}>
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
+    )}
+
+    {/* Mobile drawer */}
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-50 flex h-full w-64 flex-col border-r bg-background transition-transform duration-300 md:hidden",
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
+      <div className="flex items-center justify-between border-b px-4 h-16">
+        <Link href={`/${type}/dashboard`} className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <Printer className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-lg font-bold">PrintQ</span>
+        </Link>
+        <Button variant="ghost" size="icon" onClick={onMobileClose} className="h-8 w-8">
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {links.map((link) => {
+          const Icon = link.icon
+          const isActive = pathname === link.href || pathname.startsWith(link.href + "/")
+          const tourAttrs: Record<string, string> = {
+            "/customer/upload": "customer-upload",
+            "/customer/scan": "customer-scan",
+            "/shop/queue": "shop-queue",
+            "/shop/orders": "shop-orders-nav",
+            "/shop/printers": "shop-printers",
+            "/shop/pricing": "shop-pricing",
+          }
+          const tourAttr = tourAttrs[link.href]
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onMobileClose}
+              {...(tourAttr ? { "data-tour": tourAttr } : {})}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span>{link.label}</span>
+            </Link>
+          )
+        })}
+      </nav>
+      <div className="border-t p-3">
+        <button
+          onClick={() => { signOut({ callbackUrl: "/" }); onMobileClose?.() }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    {/* Desktop sidebar */}
     <aside
       className={cn(
         "fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col border-r transition-all duration-300 max-md:hidden",
@@ -132,5 +209,6 @@ export function Sidebar({ type }: SidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   )
 }
