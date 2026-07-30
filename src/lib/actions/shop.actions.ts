@@ -197,7 +197,7 @@ export async function getQueueAction() {
 
   return prisma.queueItem.findMany({
     where: { shopId: shop.id, status: { in: ["QUEUED", "PRINTING"] } },
-    include: { order: { include: { customer: true } }, printer: true },
+    include: { order: { include: { customer: true, files: true } }, printer: true },
     orderBy: [{ priority: "desc" }, { position: "asc" }],
   })
 }

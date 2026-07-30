@@ -92,6 +92,7 @@ export async function startPrintJobAction(queueItemId: string, printerId: string
           sides: order.sides === "Double Sided" ? "two-sided-long-edge" : "one-sided",
           color: order.color === "Color",
           paperSize: order.paperSize,
+          shopId: shop.id,
         })
         if (result.success) {
           printResults.push(`${file.name}: job ${result.jobId}`)
@@ -141,23 +142,22 @@ export async function completePrintJobAction(queueItemId: string) {
   })
   if (!shop || queueItem.shopId !== shop.id) return { error: "Unauthorized" }
 
-  await prisma.$transaction([
-    prisma.queueItem.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.queueItem.update({
       where: { id: queueItemId },
       data: { status: "COMPLETED", completedAt: new Date() },
-    }),
-    prisma.order.update({
+    })
+    await tx.order.update({
       where: { id: queueItem.orderId },
       data: { status: "QUALITY_CHECK" },
-    }),
-  ])
-
-  if (queueItem.printer) {
-    await prisma.printer.update({
-      where: { id: queueItem.printer.id },
-      data: { status: "ONLINE" },
     })
-  }
+    if (queueItem.printer) {
+      await tx.printer.update({
+        where: { id: queueItem.printer.id },
+        data: { status: "ONLINE" },
+      })
+    }
+  })
 
   if (queueItem.order.userId) {
     await createNotificationAction(
@@ -229,21 +229,23 @@ export async function failQualityCheckAction(orderId: string) {
   })
   if (!order || order.shopId !== shop.id) return { error: "Order not found" }
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "PROCESSING",
-      printNotes: `${order.printNotes || ""}\n--- Quality check failed at ${new Date().toLocaleString()}, re-queued for reprint ---`,
-    },
-  })
-
-  await prisma.queueItem.create({
-    data: {
-      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-      status: "QUEUED",
-      shopId: shop.id,
-      orderId: orderId,
-    },
+  await prisma.$transaction(async (tx) => {
+    const count = await tx.queueItem.count({ where: { shopId: shop.id } })
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: "PROCESSING",
+        printNotes: `${order.printNotes || ""}\n--- Quality check failed at ${new Date().toLocaleString()}, re-queued for reprint ---`,
+      },
+    })
+    await tx.queueItem.create({
+      data: {
+        position: count + 1,
+        status: "QUEUED",
+        shopId: shop.id,
+        orderId: orderId,
+      },
+    })
   })
 
   revalidatePath(`/shop/orders/${orderId}`)

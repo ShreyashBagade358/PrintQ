@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Save, Upload, Shield, Bell, Eye } from "lucide-react"
+import { Save, Upload, Shield, Bell, Eye, Server, Copy, ExternalLink, Terminal } from "lucide-react"
 
 export default function ShopSettingsPage() {
   return (
@@ -20,6 +20,7 @@ export default function ShopSettingsPage() {
               <TabsList>
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="branding">Branding</TabsTrigger>
+                <TabsTrigger value="print-server">Print Server</TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
               </TabsList>
@@ -85,6 +86,74 @@ export default function ShopSettingsPage() {
                     <Button className="gap-2">
                       <Save className="h-4 w-4" /> Save Changes
                     </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="print-server">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Server className="h-5 w-5" /> Print Server
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <p className="text-sm text-muted-foreground">
+                      When hosted on Vercel, PrintQ can't print directly (no CUPS). The print server runs on
+                      your shop computer, polls Vercel for jobs, and sends them to your local printers.
+                    </p>
+
+                    <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <Terminal className="h-4 w-4" /> Setup (3 steps)
+                      </p>
+                      <ol className="text-sm text-muted-foreground space-y-3 list-decimal list-inside">
+                        <li>
+                          Add <code className="bg-background px-1.5 py-0.5 rounded text-xs">PRINT_SERVER_SECRET</code> to
+                          your Vercel env vars. Generate one with:
+                          <div className="bg-background rounded p-2 mt-1 font-mono text-xs">openssl rand -hex 32</div>
+                        </li>
+                        <li>
+                          Go to <strong>Shop &gt; Printers</strong> and click <strong>Register Server</strong>. Copy the token shown.
+                        </li>
+                        <li>
+                          On the computer connected to your printers, run:
+                          <div className="bg-background rounded p-2 mt-1 font-mono text-xs space-y-0.5">
+                            <p className="text-muted-foreground"># Copy print-server.js from your project, then:</p>
+                            <p>PRINTQ_URL=https://your-app.vercel.app \</p>
+                            <p>PRINTQ_TOKEN=psk_xxx \</p>
+                            <p>PRINTQ_NAME="Front Desk" \</p>
+                            <p>node print-server.js</p>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
+
+                    <div className="rounded-lg border p-4 space-y-2">
+                      <p className="text-sm font-medium">How it works</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                          Print server polls Vercel every 2 seconds for pending print jobs.
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                          Downloads the file and prints via CUPS (<code className="bg-muted px-1 py-0.5 rounded text-xs">lp -d printerName file</code>).
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                          Reports status (printing / completed / failed) back to Vercel in real-time.
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                          Heartbeat every 30s keeps the server marked as ONLINE.
+                        </li>
+                      </ul>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      When self-hosted (not on Vercel), PrintQ falls back to local CUPS automatically — no print server needed.
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>

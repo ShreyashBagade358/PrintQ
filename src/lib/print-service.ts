@@ -3,6 +3,7 @@ import { promisify } from "util"
 import fs from "fs/promises"
 import path from "path"
 import os from "os"
+import { prisma } from "@/lib/prisma"
 
 const execFileAsync = promisify(execFile)
 
@@ -37,6 +38,7 @@ export interface PrintOptions {
   brightness?: number
   contrast?: number
   colorMode?: "auto" | "color" | "grayscale" | "monochrome"
+  shopId?: string
 }
 
 const TMP_DIR = path.join(os.tmpdir(), "printq-prints")
@@ -64,6 +66,62 @@ const VALID_COLOR_MODES = ["auto", "color", "grayscale", "monochrome"]
 const VALID_ORIENTATIONS = ["portrait", "landscape"]
 const VALID_PAPER_SIZES = ["A4", "A3", "A5", "Letter", "Legal", "Executive", "Tabloid", "B5", "JIS"]
 const VALID_PAPER_TRAYS = ["auto", "manual", "tray-1", "tray-2", "tray-3"]
+
+async function findActivePrintServer(shopId?: string): Promise<{ token: string } | null> {
+  if (!shopId) return null
+  try {
+    const server = await prisma.printServer.findFirst({
+      where: {
+        shopId,
+        status: "ONLINE",
+        lastSeen: { gte: new Date(Date.now() - 2 * 60 * 1000) },
+      },
+      orderBy: { lastSeen: "desc" },
+    })
+    return server ? { token: server.token } : null
+  } catch {
+    return null
+  }
+}
+
+async function printViaRemoteServer(
+  token: string,
+  printerName: string,
+  fileUrl: string,
+  fileName: string,
+  options?: PrintOptions,
+): Promise<PrintJobResult> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+
+    const response = await fetch(`${baseUrl}/api/print-server/jobs/push`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        printerName,
+        fileUrl,
+        fileName,
+        options,
+      }),
+    })
+
+    if (!response.ok) {
+      return { jobId: "", success: false, error: "Failed to dispatch to print server" }
+    }
+
+    const result = await response.json() as { jobId?: string; error?: string }
+    return {
+      jobId: result.jobId || "remote-pending",
+      success: true,
+    }
+  } catch {
+    return { jobId: "", success: false, error: "Print server connection failed" }
+  }
+}
 
 export async function discoverPrinters(): Promise<SystemPrinter[]> {
   try {
@@ -141,6 +199,20 @@ export async function getPrinterDetails(name: string): Promise<SystemPrinter | n
 }
 
 export async function printFile(
+  printerName: string,
+  fileUrl: string,
+  fileName: string,
+  options?: PrintOptions,
+): Promise<PrintJobResult> {
+  const server = await findActivePrintServer(options?.shopId)
+  if (server) {
+    return printViaRemoteServer(server.token, printerName, fileUrl, fileName, options)
+  }
+
+  return printViaLocalCups(printerName, fileUrl, fileName, options)
+}
+
+async function printViaLocalCups(
   printerName: string,
   fileUrl: string,
   fileName: string,

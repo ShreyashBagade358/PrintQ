@@ -31,22 +31,43 @@ interface DashboardData {
     createdAt: string
     customer: { name: string; email: string } | null
   }[]
+  statusDist: Record<string, number>
 }
 
 export default function ShopDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   const fetchData = useCallback(async () => {
-    const result = await getShopDashboardAction()
-    setData(result as unknown as DashboardData)
+    try {
+      const result = await getShopDashboardAction()
+      if (result) {
+        setData(result as unknown as DashboardData)
+        setError(false)
+      } else {
+        setError(true)
+      }
+    } catch {
+      setError(true)
+    }
     setLoading(false)
   }, [])
 
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 15000)
-    return () => clearInterval(interval)
+    let cancelled = false
+    let timeoutId: NodeJS.Timeout
+
+    const poll = async () => {
+      await fetchData()
+      if (!cancelled) timeoutId = setTimeout(poll, 15000)
+    }
+
+    poll()
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [fetchData])
 
   const statCards = data ? [
@@ -61,7 +82,7 @@ export default function ShopDashboardPage() {
     { label: "Queue Items", value: String(data.stats.queueCount) },
   ] : []
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="animate-pulse space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -74,9 +95,27 @@ export default function ShopDashboardPage() {
     )
   }
 
+  if (error && !data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-lg font-medium text-destructive">Failed to load dashboard</p>
+          <p className="text-sm text-muted-foreground mt-1">Please try refreshing the page</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) return null
+
   return (
     <>
     <div className="space-y-6">
+          {error && data && (
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              Failed to refresh dashboard data. Showing last available data.
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="shop-stats">
             {statCards.map((stat, index) => {
               const Icon = stat.icon
@@ -136,23 +175,27 @@ export default function ShopDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {["PENDING", "RECEIVED", "PROCESSING", "PRINTING", "READY", "COMPLETED"].map((status) => {
-                    const count = data?.recentOrders.filter((o) => o.status === status).length || 0
-                    const pct = data?.recentOrders.length ? Math.round((count / data.recentOrders.length) * 100) : 0
+                  {["PENDING", "RECEIVED", "IN_QUEUE", "PROCESSING", "PRINTING", "QUALITY_CHECK", "READY", "COMPLETED", "CANCELLED"].map((status) => {
+                    const count = data?.statusDist[status] || 0
+                    const total = Object.values(data?.statusDist || {}).reduce((a, b) => a + b, 0)
+                    const pct = total ? Math.round((count / total) * 100) : 0
                     return (
                       <div key={status}>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="capitalize">{status.toLowerCase()}</span>
+                          <span className="capitalize">{status.toLowerCase().replace(/_/g, " ")}</span>
                           <span className="font-medium">{count}</span>
                         </div>
                         <div className="h-2 rounded-full bg-muted">
                           <div className={`h-full rounded-full ${
                             status === "PENDING" ? "bg-yellow-500"
                             : status === "RECEIVED" ? "bg-blue-500"
+                            : status === "IN_QUEUE" ? "bg-slate-500"
                             : status === "PROCESSING" ? "bg-indigo-500"
                             : status === "PRINTING" ? "bg-purple-500"
+                            : status === "QUALITY_CHECK" ? "bg-orange-500"
                             : status === "READY" ? "bg-green-500"
-                            : "bg-emerald-500"
+                            : status === "COMPLETED" ? "bg-emerald-500"
+                            : "bg-red-500"
                           }`} style={{ width: `${pct}%` }} />
                         </div>
                       </div>

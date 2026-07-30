@@ -4,13 +4,23 @@ import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPrintersAction, addPrinterAction, updatePrinterStatusAction, updatePrinterLevelsAction, removePrinterAction } from "@/lib/actions/printer.actions"
-import { Plus, Printer, Search, Wifi, WifiOff, Trash2, Settings, RefreshCw, Radio, Download } from "lucide-react"
+import { getPrintServersAction, registerPrintServerAction, deletePrintServerAction } from "@/lib/actions/print-server.actions"
+import { Plus, Printer, Search, Wifi, WifiOff, Trash2, Settings, RefreshCw, Radio, Download, Server, Copy, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+
+interface PrintServerItem {
+  id: string
+  name: string
+  status: string
+  lastSeen: string | null
+  ipAddress: string | null
+  createdAt: string
+}
 
 interface PrinterItem {
   id: string
@@ -38,6 +48,17 @@ export default function ShopPrintersPage() {
   const [addMode, setAddMode] = useState<"manual" | "discover">("manual")
   const [submitting, setSubmitting] = useState(false)
 
+  const [printServers, setPrintServers] = useState<PrintServerItem[]>([])
+  const [showRegisterDialog, setShowRegisterDialog] = useState(false)
+  const [newServerName, setNewServerName] = useState("")
+  const [registeredToken, setRegisteredToken] = useState<string | null>(null)
+  const [registering, setRegistering] = useState(false)
+
+  const fetchPrintServers = useCallback(async () => {
+    const servers = await getPrintServersAction()
+    setPrintServers(servers as unknown as PrintServerItem[])
+  }, [])
+
   const fetchData = useCallback(async () => {
     const data = await getPrintersAction()
     setPrinters(data as unknown as PrinterItem[])
@@ -45,6 +66,46 @@ export default function ShopPrintersPage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { fetchPrintServers() }, [fetchPrintServers])
+
+  const handleRegisterServer = async () => {
+    if (!newServerName.trim()) {
+      toast.error("Enter a server name")
+      return
+    }
+    setRegistering(true)
+    const result = await registerPrintServerAction(newServerName.trim())
+    if ("error" in result) {
+      toast.error(result.error || "Failed to register")
+      setRegistering(false)
+      return
+    }
+    setRegisteredToken(result.token)
+    setNewServerName("")
+    fetchPrintServers()
+    toast.success("Server registered. Copy the token below.")
+    setRegistering(false)
+  }
+
+  const handleDeleteServer = async (serverId: string) => {
+    if (!confirm("Delete this print server? It will need to re-register.")) return
+    const result = await deletePrintServerAction(serverId)
+    if ("error" in result) {
+      toast.error(result.error || "Failed to delete")
+      return
+    }
+    toast.success("Print server deleted")
+    fetchPrintServers()
+  }
+
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never"
+    const diff = Date.now() - new Date(lastSeen).getTime()
+    if (diff < 60_000) return "Just now"
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
+    return `${Math.floor(diff / 86_400_000)}d ago`
+  }
 
   const handleToggleStatus = async (printerId: string, currentStatus: string) => {
     const newStatus = currentStatus === "ONLINE" ? "OFFLINE" : "ONLINE"
@@ -166,6 +227,113 @@ export default function ShopPrintersPage() {
 
   return (
     <div className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <Server className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">Print Server</CardTitle>
+                {printServers.length > 0 && (
+                  <span className={`ml-2 inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${printServers.some((s) => s.status === "ONLINE") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${printServers.some((s) => s.status === "ONLINE") ? "bg-emerald-500" : "bg-red-500"}`} />
+                    {printServers.some((s) => s.status === "ONLINE") ? "Connected" : "Offline"}
+                  </span>
+                )}
+              </div>
+              <Dialog open={showRegisterDialog} onOpenChange={(open) => {
+                setShowRegisterDialog(open)
+                if (!open) setRegisteredToken(null)
+              }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Register Server
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Register Print Server</DialogTitle>
+                  </DialogHeader>
+                  {registeredToken ? (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Copy this token and set it as <code className="bg-muted px-1.5 py-0.5 rounded text-xs">PRINTQ_TOKEN</code> when running the print server.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Input readOnly value={registeredToken} className="font-mono text-xs" />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => { navigator.clipboard.writeText(registeredToken); toast.success("Copied") }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
+                        <p className="text-muted-foreground"># Run on the computer connected to your printers:</p>
+                        <p>PRINTQ_URL={typeof window !== "undefined" ? window.location.origin : "https://your-app.vercel.app"} \</p>
+                        <p>PRINTQ_TOKEN={registeredToken.slice(0, 12)}... \</p>
+                        <p>{"PRINTQ_NAME=\"" + (newServerName || "My Printer") + "\" \\"}</p>
+                        <p>node print-server.js</p>
+                      </div>
+                      <Button className="w-full" onClick={() => { setShowRegisterDialog(false); setRegisteredToken(null) }}>Done</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Register a print server that runs on the computer connected to your printers.
+                      </p>
+                      <Input
+                        placeholder="Server name (e.g. Front Desk PC)"
+                        value={newServerName}
+                        onChange={(e) => setNewServerName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleRegisterServer() }}
+                      />
+                      <Button className="w-full" onClick={handleRegisterServer} disabled={registering}>
+                        {registering ? "Registering..." : "Register"}
+                      </Button>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {printServers.length === 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    No print servers registered. Print jobs need a print server to reach your printers.
+                  </p>
+                  <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
+                    <p className="text-muted-foreground"># 1. Register a server (click above), then run:</p>
+                    <p>PRINTQ_URL=... PRINTQ_TOKEN=psk_... node print-server.js</p>
+                    <p className="text-muted-foreground mt-2"># The script auto-discovers CUPS printers and handles print jobs.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {printServers.map((server) => (
+                    <div key={server.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-2.5 w-2.5 rounded-full ${server.status === "ONLINE" ? "bg-emerald-500" : "bg-red-500"}`} />
+                        <div>
+                          <p className="font-medium text-sm">{server.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Last seen: {formatLastSeen(server.lastSeen)}
+                            {server.ipAddress && <span className="ml-2">{server.ipAddress}</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={server.status.toLowerCase()} />
+                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleDeleteServer(server.id)}>
+                          <Trash2 className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

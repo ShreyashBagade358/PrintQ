@@ -15,18 +15,31 @@ export async function getMonthlySalesReportAction(month: number, year: number) {
   const startDate = new Date(year, month - 1, 1)
   const endDate = new Date(year, month, 0, 23, 59, 59)
 
-  const orders = await prisma.order.findMany({
-    where: { shopId: shop.id, createdAt: { gte: startDate, lte: endDate } },
-    include: { customer: true },
-    orderBy: { createdAt: "desc" },
-  })
+  const [aggregation, colorOrders, completedOrders, orders] = await Promise.all([
+    prisma.order.aggregate({
+      where: { shopId: shop.id, createdAt: { gte: startDate, lte: endDate } },
+      _sum: { total: true, pages: true },
+      _avg: { total: true },
+      _count: true,
+    }),
+    prisma.order.count({
+      where: { shopId: shop.id, createdAt: { gte: startDate, lte: endDate }, color: "COLOR" },
+    }),
+    prisma.order.count({
+      where: { shopId: shop.id, createdAt: { gte: startDate, lte: endDate }, status: "COMPLETED" },
+    }),
+    prisma.order.findMany({
+      where: { shopId: shop.id, createdAt: { gte: startDate, lte: endDate } },
+      select: { orderId: true, pages: true, total: true, status: true, createdAt: true, customer: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+  ])
 
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
-  const totalOrders = orders.length
+  const totalOrders = aggregation._count
+  const totalRevenue = Number(aggregation._sum.total ?? 0)
+  const totalPages = aggregation._sum.pages ?? 0
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-  const totalPages = orders.reduce((sum, o) => sum + o.pages, 0)
-  const colorOrders = orders.filter((o) => o.color === "COLOR").length
-  const completedOrders = orders.filter((o) => o.status === "COMPLETED").length
 
   return {
     month,
@@ -55,16 +68,27 @@ export async function getOrderSummaryAction(days: number) {
   const since = new Date()
   since.setDate(since.getDate() - days)
 
-  const orders = await prisma.order.findMany({
-    where: { shopId: shop.id, createdAt: { gte: since } },
-    include: { customer: true },
-    orderBy: { createdAt: "desc" },
-  })
+  const [aggregation, statusGroups, orders] = await Promise.all([
+    prisma.order.aggregate({
+      where: { shopId: shop.id, createdAt: { gte: since } },
+      _sum: { total: true, pages: true },
+      _count: true,
+    }),
+    prisma.order.groupBy({
+      by: ["status"],
+      where: { shopId: shop.id, createdAt: { gte: since } },
+      _count: { id: true },
+    }),
+    prisma.order.findMany({
+      where: { shopId: shop.id, createdAt: { gte: since } },
+      select: { orderId: true, pages: true, total: true, status: true, createdAt: true, customer: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    }),
+  ])
 
   const statusBreakdown: Record<string, number> = {}
-  orders.forEach((o) => {
-    statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1
-  })
+  statusGroups.forEach((g) => { statusBreakdown[g.status] = g._count.id })
 
   const dailyData: Record<string, { orders: number; revenue: number }> = {}
   orders.forEach((o) => {
@@ -77,9 +101,9 @@ export async function getOrderSummaryAction(days: number) {
   return {
     days,
     summary: {
-      totalOrders: orders.length,
-      totalRevenue: orders.reduce((s, o) => s + Number(o.total), 0),
-      totalPages: orders.reduce((s, o) => s + o.pages, 0),
+      totalOrders: aggregation._count,
+      totalRevenue: Number(aggregation._sum.total ?? 0),
+      totalPages: aggregation._sum.pages ?? 0,
       statusBreakdown,
     },
     daily: Object.entries(dailyData).map(([date, data]) => ({ date, ...data })),
@@ -146,11 +170,19 @@ export async function getCustomReportDataAction(type: string, dateRange: string)
   }
 
   if (type === "Orders") {
-    const orders = await prisma.order.findMany({
-      where: { shopId: shop.id, createdAt: { gte: since } },
-      include: { customer: true },
-      orderBy: { createdAt: "desc" },
-    })
+    const [aggregation, orders] = await Promise.all([
+      prisma.order.aggregate({
+        where: { shopId: shop.id, createdAt: { gte: since } },
+        _sum: { total: true, pages: true },
+        _count: true,
+      }),
+      prisma.order.findMany({
+        where: { shopId: shop.id, createdAt: { gte: since } },
+        select: { orderId: true, pages: true, total: true, status: true, createdAt: true, customer: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
+    ])
     return {
       type: "Orders",
       dateRange,
@@ -164,18 +196,27 @@ export async function getCustomReportDataAction(type: string, dateRange: string)
         "Date": o.createdAt.toLocaleDateString(),
       })),
       summary: {
-        totalOrders: orders.length,
-        totalRevenue: orders.reduce((s, o) => s + Number(o.total), 0),
-        totalPages: orders.reduce((s, o) => s + o.pages, 0),
+        totalOrders: aggregation._count,
+        totalRevenue: Number(aggregation._sum.total ?? 0),
+        totalPages: aggregation._sum.pages ?? 0,
       },
     }
   }
 
   if (type === "Revenue") {
-    const orders = await prisma.order.findMany({
-      where: { shopId: shop.id, createdAt: { gte: since } },
-      orderBy: { createdAt: "desc" },
-    })
+    const [aggregation, orders] = await Promise.all([
+      prisma.order.aggregate({
+        where: { shopId: shop.id, createdAt: { gte: since } },
+        _sum: { total: true },
+        _count: true,
+      }),
+      prisma.order.findMany({
+        where: { shopId: shop.id, createdAt: { gte: since } },
+        select: { total: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
+    ])
     const daily: Record<string, number> = {}
     orders.forEach((o) => {
       const day = o.createdAt.toISOString().slice(0, 10)
@@ -191,8 +232,8 @@ export async function getCustomReportDataAction(type: string, dateRange: string)
         "Orders": String(orders.filter((o) => o.createdAt.toISOString().slice(0, 10) === date).length),
       })),
       summary: {
-        totalRevenue: orders.reduce((s, o) => s + Number(o.total), 0),
-        totalOrders: orders.length,
+        totalRevenue: Number(aggregation._sum.total ?? 0),
+        totalOrders: aggregation._count,
       },
     }
   }
@@ -201,6 +242,7 @@ export async function getCustomReportDataAction(type: string, dateRange: string)
     const customers = await prisma.customer.findMany({
       where: { shopId: shop.id },
       orderBy: { totalSpent: "desc" },
+      take: 50,
     })
     return {
       type: "Customers",

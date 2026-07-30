@@ -4,7 +4,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import { printFile, cancelPrintJob, holdPrintJob, resumePrintJob } from "@/lib/print-service"
+import { printFile, cancelPrintJob } from "@/lib/print-service"
 import { createNotificationAction } from "./notification.actions"
 
 const operatorSettingsSchema = z.object({
@@ -114,6 +114,7 @@ export async function startPrintWithSettingsAction(orderId: string, queueItemId:
           sides: order.sides === "Double Sided" ? "two-sided-long-edge" : "one-sided",
           color: order.color === "Color",
           paperSize: order.paperSize,
+          shopId: shop.id,
           orientation: (customerSettings?.orientation as "portrait" | "landscape") || undefined,
           pageRanges: customerSettings?.pageRange === "custom" ? (customerSettings?.customPageRange as string) : undefined,
           printQuality: qualityMap[customerQuality || "normal"],
@@ -170,23 +171,22 @@ export async function cancelOrderPrintJobAction(orderId: string) {
     await cancelPrintJob(`${activeItem.printer?.name || "unknown"}-${activeItem.id}`)
   }
 
-  await prisma.$transaction([
-    prisma.queueItem.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.queueItem.update({
       where: { id: activeItem.id },
       data: { status: "COMPLETED", completedAt: new Date() },
-    }),
-    prisma.order.update({
+    })
+    await tx.order.update({
       where: { id: orderId },
       data: { status: "CANCELLED", completedAt: new Date() },
-    }),
-  ])
-
-  if (activeItem.printerId) {
-    await prisma.printer.update({
-      where: { id: activeItem.printerId },
-      data: { status: "ONLINE" },
     })
-  }
+    if (activeItem.printerId) {
+      await tx.printer.update({
+        where: { id: activeItem.printerId },
+        data: { status: "ONLINE" },
+      })
+    }
+  })
 
   revalidatePath(`/shop/orders/${orderId}`)
   revalidatePath("/shop/orders")
@@ -211,22 +211,24 @@ export async function acceptPayLaterOrderAction(orderId: string) {
   })
   if (!shop || order.shopId !== shop.id) return { error: "Unauthorized" }
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "IN_QUEUE",
-      estimatedReadyAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      printNotes: `${order.printNotes || ""}\n--- Payment received at shop on ${new Date().toLocaleString()} ---`.trim(),
-    },
-  })
-
-  await prisma.queueItem.create({
-    data: {
-      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-      status: "QUEUED",
-      shopId: shop.id,
-      orderId: order.id,
-    },
+  await prisma.$transaction(async (tx) => {
+    const count = await tx.queueItem.count({ where: { shopId: shop.id } })
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: "IN_QUEUE",
+        estimatedReadyAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        printNotes: `${order.printNotes || ""}\n--- Payment received at shop on ${new Date().toLocaleString()} ---`.trim(),
+      },
+    })
+    await tx.queueItem.create({
+      data: {
+        position: count + 1,
+        status: "QUEUED",
+        shopId: shop.id,
+        orderId: order.id,
+      },
+    })
   })
 
   const customer = await prisma.customer.findUnique({ where: { id: order.customerId } })
@@ -268,18 +270,20 @@ export async function reprintOrderAction(orderId: string) {
   })
   if (!shop || order.shopId !== shop.id) return { error: "Unauthorized" }
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { status: "RECEIVED", printNotes: `${order.printNotes || ""}\n--- Reprint requested at ${new Date().toLocaleString()} ---` },
-  })
-
-  await prisma.queueItem.create({
-    data: {
-      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-      status: "QUEUED",
-      shopId: shop.id,
-      orderId: order.id,
-    },
+  await prisma.$transaction(async (tx) => {
+    const count = await tx.queueItem.count({ where: { shopId: shop.id } })
+    await tx.order.update({
+      where: { id: orderId },
+      data: { status: "RECEIVED", printNotes: `${order.printNotes || ""}\n--- Reprint requested at ${new Date().toLocaleString()} ---` },
+    })
+    await tx.queueItem.create({
+      data: {
+        position: count + 1,
+        status: "QUEUED",
+        shopId: shop.id,
+        orderId: order.id,
+      },
+    })
   })
 
   revalidatePath(`/shop/orders/${orderId}`)

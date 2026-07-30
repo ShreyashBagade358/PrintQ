@@ -1,6 +1,6 @@
-# PrintQ — Print Shop Management SaaS
+# PrintQ — Print Shop Management Platform
 
-A full-featured print shop management platform built with Next.js 16. Multi-tenant SaaS that connects print shop owners, staff, and customers in one unified system.
+A full-featured print shop management SaaS built with Next.js 16. Multi-tenant platform connecting print shop owners, staff, and customers in one unified system with remote print server support.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ A full-featured print shop management platform built with Next.js 16. Multi-tena
 |-------|-----------|
 | Framework | Next.js 16.2.10 (App Router, Turbopack) |
 | Language | TypeScript 5 |
-| Database | PostgreSQL 14 via Prisma 5.22.0 ORM |
+| Database | PostgreSQL 14+ via Prisma 5.22.0 ORM (Neon) |
 | Auth | NextAuth v5 beta (JWT, Credentials, Google OAuth, PrismaAdapter) |
 | Styling | TailwindCSS v4 + shadcn/ui (Radix primitives) |
 | Animations | Framer Motion 12 |
@@ -16,9 +16,12 @@ A full-featured print shop management platform built with Next.js 16. Multi-tena
 | Charts | Recharts |
 | File Upload | Uploadthing 7.4 (S3-compatible) |
 | Payments | Stripe |
-| Printing | CUPS / IPP (macOS/Linux system printers) |
+| QR Scanning | html5-qrcode |
+| Local Printing | CUPS / IPP (macOS/Linux system printers) |
+| Remote Printing | Node.js print-server.js (CUPS bridge) |
 | Notifications | Sonner toasts + in-app notification system |
 | Email | Resend (placeholder) |
+| Onboarding | React Joyride |
 
 ## Architecture (Full File Tree)
 
@@ -26,15 +29,7 @@ A full-featured print shop management platform built with Next.js 16. Multi-tena
 printq/
 │
 ├── prisma/                                   # Database layer
-│   ├── schema.prisma                         #   18 models, 10 enums, relations
-│   └── seed.ts                               #   Test data: users, shop, printers, orders, pricing
-│
-├── public/                                   # Static assets
-│   ├── file.svg
-│   ├── globe.svg
-│   ├── next.svg
-│   ├── vercel.svg
-│   └── window.svg
+│   └── schema.prisma                         #   26 models, 10 enums, relations
 │
 ├── src/
 │   │
@@ -48,20 +43,25 @@ printq/
 │   │   ├── page.tsx                          #   Home page (/)
 │   │   ├── error.tsx                         #   Global error boundary
 │   │   ├── not-found.tsx                     #   404 fallback
-│   │   ├── forbidden.tsx                     #   403 forbidden page
 │   │   ├── favicon.ico
 │   │   │
-│   │   ├── auth/                             # 🔐 Authentication pages
-│   │   │   ├── login/page.tsx                #     Sign-in with email/password
-│   │   │   ├── register/page.tsx             #     Create account
+│   │   ├── auth/                             # 🔐 Authentication (8 pages)
+│   │   │   ├── login/page.tsx                #     Sign-in
+│   │   │   ├── register/page.tsx             #     Shop owner registration
+│   │   │   ├── customer-login/page.tsx       #     Customer sign-in
+│   │   │   ├── customer-register/page.tsx    #     Customer registration
+│   │   │   ├── shop-login/page.tsx           #     Shop staff sign-in
 │   │   │   ├── forgot-password/page.tsx      #     Password reset request
 │   │   │   ├── reset-password/page.tsx       #     Set new password
 │   │   │   └── verify/page.tsx               #     Email verification
 │   │   │
-│   │   ├── customer/                         # 👤 Customer portal
+│   │   ├── customer/                         # 👤 Customer portal (11 routes)
 │   │   │   ├── dashboard/page.tsx            #     Order summary, recent activity
 │   │   │   ├── upload/page.tsx               #     Drag-and-drop file upload + print options
 │   │   │   ├── orders/page.tsx               #     Order history
+│   │   │   ├── orders/[id]/page.tsx          #     Order detail with status timeline
+│   │   │   ├── scan/page.tsx                 #     QR scanner for shop connection
+│   │   │   ├── scan/[token]/page.tsx         #     Scanner with pre-filled shop token
 │   │   │   ├── track/page.tsx                #     Track order by ID
 │   │   │   ├── profile/page.tsx              #     Edit profile
 │   │   │   ├── settings/page.tsx             #     Account settings
@@ -69,13 +69,13 @@ printq/
 │   │   │   ├── support/page.tsx              #     Submit support tickets
 │   │   │   └── success/page.tsx              #     Post-order success page
 │   │   │
-│   │   ├── shop/                             # 🏪 Shop owner / staff dashboard
-│   │   │   ├── dashboard/page.tsx            #     Revenue, orders, queue stats
+│   │   ├── shop/                             # 🏪 Shop owner / staff dashboard (13 routes)
+│   │   │   ├── dashboard/page.tsx            #     Revenue, orders, queue stats, QR display
 │   │   │   ├── orders/
 │   │   │   │   ├── page.tsx                  #     All orders with search + tabs
-│   │   │   │   └── [id]/page.tsx             #     Order detail: timeline, files, Print Now
-│   │   │   ├── queue/page.tsx                #     Print queue: priority, printer assign
-│   │   │   ├── printers/page.tsx             #     Printer mgmt + CUPS discovery
+│   │   │   │   └── [id]/page.tsx             #     Order detail: timeline, files, operator settings, Print Now
+│   │   │   ├── queue/page.tsx                #     Print queue: priority, printer assign, start/complete
+│   │   │   ├── printers/page.tsx             #     Printer mgmt + print server connection status
 │   │   │   ├── customers/page.tsx            #     Customer directory
 │   │   │   ├── pricing/page.tsx              #     Per-page pricing rules
 │   │   │   ├── analytics/page.tsx            #     Business analytics
@@ -83,35 +83,12 @@ printq/
 │   │   │   ├── staff/page.tsx                #     Staff management
 │   │   │   ├── billing/page.tsx              #     Billing history
 │   │   │   ├── subscription/page.tsx         #     Plan management
-│   │   │   ├── settings/page.tsx             #     Shop configuration
+│   │   │   ├── settings/page.tsx             #     Shop config + print server setup guide
 │   │   │   ├── notifications/page.tsx        #     Shop notifications
 │   │   │   └── profile/page.tsx              #     Shop profile
 │   │   │
-│   │   ├── admin/                            # 🛡️ Super admin panel
-│   │   │   ├── dashboard/page.tsx            #     Platform overview
-│   │   │   ├── shops/page.tsx                #     All shops management
-│   │   │   ├── users/page.tsx                #     User management
-│   │   │   ├── subscriptions/page.tsx        #     Plan & subscription oversight
-│   │   │   ├── payments/page.tsx             #     Transaction history
-│   │   │   ├── coupons/page.tsx              #     Discount codes
-│   │   │   ├── tickets/page.tsx              #     Support tickets
-│   │   │   ├── blog/page.tsx                 #     Blog posts
-│   │   │   ├── cms/page.tsx                  #     CMS pages
-│   │   │   ├── activity/page.tsx             #     Audit log
-│   │   │   ├── settings/page.tsx             #     Global settings
-│   │   │   └── help/page.tsx                 #     Help / docs
-│   │   │
-│   │   ├── public/                           # 🌐 Marketing pages
-│   │   │   ├── landing/
-│   │   │   │   ├── page.tsx                  #     Landing page (composed sections)
-│   │   │   │   ├── hero.tsx                  #     Hero section
-│   │   │   │   ├── features.tsx              #     Features grid
-│   │   │   │   ├── benefits.tsx              #     Benefits section
-│   │   │   │   ├── how-it-works.tsx          #     Step-by-step guide
-│   │   │   │   ├── testimonials.tsx          #     Customer testimonials
-│   │   │   │   ├── trusted-shops.tsx         #     Trusted by logos
-│   │   │   │   ├── faq.tsx                   #     FAQ accordion
-│   │   │   │   └── cta-banner.tsx            #     Call-to-action banner
+│   │   ├── public/                           # 🌐 Marketing pages (6 routes)
+│   │   │   ├── landing/page.tsx              #     Landing page (composed sections)
 │   │   │   ├── pricing/page.tsx              #     Pricing plans
 │   │   │   ├── about/page.tsx                #     About us
 │   │   │   ├── blog/page.tsx                 #     Blog listing
@@ -137,7 +114,14 @@ printq/
 │   │       ├── auth/[...nextauth]/route.ts   #     NextAuth handler
 │   │       ├── uploadthing/route.ts          #     Uploadthing server handler
 │   │       ├── print/route.ts                #     CUPS printer API (discover, print, manage)
-│   │       └── webhooks/stripe/route.ts      #     Stripe webhook receiver
+│   │       ├── webhooks/stripe/route.ts      #     Stripe webhook receiver
+│   │       ├── print-server/
+│   │       │   ├── register/route.ts         #     Print server registration
+│   │       │   ├── heartbeat/route.ts        #     Print server heartbeat
+│   │       │   ├── status/route.ts           #     Connection health check
+│   │       │   ├── jobs/push/route.ts        #     Push new print jobs
+│   │       │   ├── jobs/dispatch/route.ts    #     Claim pending jobs (atomic)
+│   │       │   └── jobs/[id]/status/route.ts #     Job status updates
 │   │
 │   ├── components/                           # 🧩 Reusable UI components
 │   │   ├── ui/                               #     shadcn/ui primitives
@@ -150,43 +134,65 @@ printq/
 │   │   │   ├── dialog.tsx                    #       Radix Dialog (modals)
 │   │   │   ├── dropdown-menu.tsx             #       Radix DropdownMenu
 │   │   │   ├── input.tsx                     #       Form input
+│   │   │   ├── label.tsx                     #       Form label
 │   │   │   ├── select.tsx                    #       Radix Select
 │   │   │   ├── skeleton.tsx                  #       Loading skeleton
 │   │   │   ├── status-badge.tsx              #       Colored status indicator
 │   │   │   ├── switch.tsx                    #       Radix Switch
 │   │   │   ├── table.tsx                     #       Table component
 │   │   │   ├── tabs.tsx                      #       Radix Tabs
-│   │   │   └── textarea.tsx                  #       Form textarea
+│   │   │   ├── textarea.tsx                  #       Form textarea
+│   │   │   └── theme-toggle.tsx              #       Dark/light mode toggle
 │   │   ├── layout/                           #     Layout components
-│   │   │   ├── sidebar.tsx                   #       Role-aware sidebar (admin = dark navy)
+│   │   │   ├── sidebar.tsx                   #       Role-aware sidebar
 │   │   │   ├── dashboard-navbar.tsx          #       Dashboard top navbar
 │   │   │   ├── breadcrumb.tsx                #       Breadcrumb navigation
 │   │   │   ├── public-navbar.tsx             #       Marketing site navbar
 │   │   │   └── public-footer.tsx             #       Dark navy footer
-│   │   └── providers/                        #     React context providers
-│   │       └── session-provider.tsx          #       NextAuth SessionProvider
+│   │   ├── providers/                        #     React context providers
+│   │   │   └── session-provider.tsx          #       NextAuth SessionProvider
+│   │   ├── scan/                             #     QR scanner components
+│   │   │   └── camera-scanner.tsx            #       html5-qrcode camera scanner
+│   │   ├── shop/                             #     Shop-specific components
+│   │   │   └── qr-display.tsx                #       Shop QR code display
+│   │   └── onboarding/                       #     Tutorial system
+│   │       ├── tutorial-provider.tsx         #       React Joyride provider
+│   │       ├── tour-configs.tsx              #       Tour step configurations
+│   │       └── tutorial-button.tsx           #       Tutorial trigger button
 │   │
 │   └── lib/                                  # 📚 Shared libraries
-│       ├── actions/                          #     Server Actions (all "use server")
-│       │   ├── auth.actions.ts               #       login, register
-│       │   ├── order.actions.ts              #       createOrder, getOrders, getOrderDetail, updateStatus
-│       │   ├── queue.actions.ts              #       getQueue, startPrint, completePrint, assignPrinter, updatePriority
-│       │   ├── printer.actions.ts            #       getPrinters, addPrinter, updateStatus, updateLevels, remove
+│       ├── actions/                          #     Server Actions (14 files)
+│       │   ├── auth.actions.ts               #       login, register, Google OAuth
+│       │   ├── customer-order.actions.ts     #       Customer order creation, tracking
 │       │   ├── dashboard.actions.ts          #       getShopDashboard, getShopOrders, getShopOrderDetail
 │       │   ├── notification.actions.ts       #       getNotifications, create, markRead, delete
-│       │   ├── shop.actions.ts               #       Shop CRUD
-│       │   └── admin.actions.ts              #       Admin operations
+│       │   ├── operator.actions.ts           #       Operator settings, start print with settings, accept pay-later, reprint
+│       │   ├── order.actions.ts              #       createOrder, getOrders, getOrderDetail, updateStatus
+│       │   ├── payment.actions.ts            #       Stripe payment intents, pay-later
+│       │   ├── print-server.actions.ts       #       PrintServer CRUD, register token management
+│       │   ├── printer.actions.ts            #       getPrinters, addPrinter, updateStatus, updateLevels, remove
+│       │   ├── profile.actions.ts            #       getProfile, updateProfile, changePassword, getCustomerDashboard
+│       │   ├── qr.actions.ts                 #       QR token generation, validation
+│       │   ├── queue.actions.ts              #       getQueue, startPrint, completePrint, fail QC, assign, updatePriority
+│       │   ├── report.actions.ts             #       Monthly sales, order summary, customer report, custom reports
+│       │   └── shop.actions.ts               #       Shop CRUD, profile stats, duplicate getQueue
 │       ├── auth.ts                           #     NextAuth initialization
 │       ├── auth.config.ts                    #     Auth config: providers, callbacks, JWT, authorized()
 │       ├── next-auth.d.ts                    #     NextAuth type augmentation
 │       ├── prisma.ts                         #     Prisma client singleton
 │       ├── stripe.ts                         #     Stripe client init
 │       ├── uploadthing.ts                    #     Uploadthing file router (PDF, DOCX, images)
-│       ├── print-service.ts                  #     CUPS/lp integration (discover, print, manage printers)
+│       ├── print-service.ts                  #     CUPS/lp integration + remote print server routing
+│       ├── print-server-utils.ts             #     Internal print server helpers
+│       ├── qr-token.ts                       #     QR token creation/verification
 │       ├── types.ts                          #     Shared TypeScript interfaces
 │       ├── utils.ts                          #     formatCurrency, formatDateTime, cn()
 │       └── constants.ts                      #     App-wide constants
 │
+├── print-server.js                           # Standalone remote print server (CUPS bridge)
+├── generate-report.ts                        # Academic report generator (docx)
+├── test-e2e.sh                               # 63 E2E endpoint tests
+├── test-interaction.sh                       # 55 interaction tests
 ├── .env                                      # Environment variables (local)
 ├── .env.example                              # Environment template with docs
 ├── next.config.ts                            # Next.js configuration
@@ -197,18 +203,17 @@ printq/
 ├── AGENTS.md                                 # AI agent instructions
 └── CLAUDE.md                                 # Claude config
 ```
-```
 
-## Database (18 Models)
+## Database (26 Models)
 
 - **User** — All users with role-based access (SUPER_ADMIN, SHOP_OWNER, STAFF, CUSTOMER)
 - **Account / Session / VerificationToken** — NextAuth provider accounts
-- **Shop** — Print shop profile with settings, branding, timezone
+- **Shop** — Print shop profile with settings, branding, QR token, timezone
 - **Customer** — Per-shop customer records with order history & spending
-- **Order** — Print orders with status workflow (PENDING → RECEIVED → PROCESSING → PRINTING → READY → COMPLETED / CANCELLED / REFUNDED)
+- **Order** — Print orders with full status workflow (PENDING → RECEIVED → IN_QUEUE → PROCESSING → PRINTING → QUALITY_CHECK → READY → COMPLETED / CANCELLED / REFUNDED)
 - **PrintFile** — Uploaded files attached to orders
-- **QueueItem** — Print queue with priority system (LOW / NORMAL / HIGH / URGENT), printer assignment, status tracking
-- **Printer** — Printer registry per shop with paper/ink levels, capabilities, status (ONLINE / OFFLINE / BUSY / ERROR)
+- **QueueItem** — Print queue with priority system (LOW / NORMAL / HIGH / URGENT), printer assignment, position tracking
+- **Printer** — Printer registry per shop with paper/ink levels, capabilities, status tracking
 - **PricingRule** — Per-shop pricing by paper size + color type
 - **Staff** — Staff membership with roles and permissions
 - **Subscription / Plan** — SaaS subscription tiers
@@ -218,56 +223,60 @@ printq/
 - **Ticket / TicketMessage** — Support ticket system
 - **BlogPost / CMSPage** — Content management
 - **ActivityLog** — Audit trail
+- **ScanEvent** — QR scan event recording
 - **Setting** — Key-value app settings
+- **PrintServer** — Registered remote print servers
+- **PrintJob** — Cloud-to-local print dispatch jobs
 
 ## Features by Role
 
 ### Customer Portal (`/customer/*`)
 - **Dashboard** — Order summary, recent activity, quick actions
-- **Upload Print Job** — Drag-and-drop file upload with Uploadthing, print options (color, paper size, copies, sides, finishing), live price calculation
-- **Orders** — View all orders with status tracking
+- **Upload Print Job** — Drag-and-drop file upload (PDF/DOCX/images), print options (color, paper size, copies, sides, finishing), live price calculation, orientation, print quality
+- **Orders** — View all orders with status tracking and detail view
 - **Track Order** — Real-time order tracking by order ID
+- **QR Scan** — Scan shop QR codes to connect to a specific shop
 - **Profile / Settings** — Account management
 - **Support** — Submit support tickets
 - **Notifications** — In-app notifications
 
 ### Shop Owner / Staff (`/shop/*`)
-- **Dashboard** — Revenue stats, orders overview, pending queue count, recent orders table
-- **Orders** — Full order management with search, status filters (All/Active/Completed/Cancelled), order detail with timeline, file downloads, Print Now with printer selection, Mark Ready
-- **Queue** — Print queue with priority management, printer assignment, start/complete print jobs
-- **Printers** — Printer registry with CUPS discovery, paper/ink level monitoring, status toggle, remove
+- **Dashboard** — Revenue stats, order counts, pages printed, pending orders, queue count, printer status, Order Status Distribution chart, recent orders table, QR code display
+- **Orders** — Full order management with search, status filters, order detail with timeline, file downloads, operator print settings (tray, DPI, scaling, margins), Print Now with printer selection, Mark Ready / fail quality check
+- **Queue** — Print queue with priority management, printer assignment, start/complete/cancel print jobs
+- **Printers** — Printer registry with remote print server connection status, add/remove, status toggle, paper/ink levels
 - **Customers** — Customer directory
-- **Analytics / Reports** — Business insights
+- **Analytics / Reports** — Business insights with custom reports (Orders, Revenue, Customers, Printers)
 - **Pricing** — Configure per-page pricing rules
 - **Staff** — Manage staff accounts
 - **Billing / Subscription** — Plan management
-- **Settings** — Shop configuration, branding, notifications
+- **Settings** — Shop configuration, branding, **print server setup guide**
+- **Notifications** — Shop notification center
 
-### Admin (`/admin/*`)
-- **Dashboard** — Platform-wide analytics
-- **Shops** — Manage all shops
-- **Users** — User management
-- **Subscriptions** — Plan & subscription oversight
-- **Blog / CMS** — Content management
-- **Coupons** — Discount code management
-- **Payments** — Transaction overview
-- **Tickets** — Support ticket administration
-- **Activity Log** — Platform audit trail
-- **Settings** — Global configuration
+## Print System
 
-## Printing System (CUPS / IPP)
+PrintQ supports two printing paths:
 
-PrintQ integrates with the system's CUPS printing service for real printer communication:
+### 1. Local CUPS Printing (Self-hosted)
+Direct integration with the system's CUPS printing service:
+- **Printer Discovery** — Scan system CUPS printers via `lpstat -p`, import with one click
+- **Real Printing** — File downloaded from Uploadthing → sent to CUPS printer via `lp` command → result logged in `printNotes`
+- **Operator Settings** — Per-job settings: tray, DPI, scaling, margins, orientation, pages-per-sheet, color mode, brightness/contrast
 
-- **Printer Discovery** — Scan system CUPS printers via `lpstat -p`, import into the app with one click
-- **Manual Add** — Add printers by name/model or IPP URI (`ipp://192.168.1.50/ipp/print`)
-- **Real Printing** — When "Start Print" is clicked in the queue or order detail:
-  1. File is downloaded from Uploadthing
-  2. Sent to the assigned CUPS printer via `lp` command
-  3. Print job result logged in order's `printNotes`
-  4. Printer status set to BUSY, queue item to PRINTING
-- **Network Printers** — Supports IPP, IPPS, LPD, SMB, and socket protocols via CUPS
-- **Test Printer** — `PrintQ-Test` CUPS printer installed for development/testing
+### 2. Remote Print Server Bridge (Vercel / Cloud)
+For cloud-hosted deployments, a lightweight Node.js worker bridges cloud to local printers:
+
+```
+┌─────────────┐     poll /dispatch    ┌──────────────┐     lp      ┌──────────┐
+│  Vercel      │ ◄────────────────── │  print-server │ ──────────►│  CUPS    │
+│  (PrintQ)    │     status /push     │  (Node.js)    │            │  Printer │
+└─────────────┘                      └──────────────┘            └──────────┘
+```
+
+- **print-server.js** — Single-file 150-line script, 3 env vars (`PRINTQ_URL`, `PRINTQ_TOKEN`, `PRINTQ_NAME`)
+- **Atomic job claiming** — `$transaction` prevents double-dispatch
+- **Poll lock guard** — No overlapping poll cycles
+- **Heartbeat** — Periodic health check reporting
 
 ### Print API Endpoints
 
@@ -277,51 +286,70 @@ PrintQ integrates with the system's CUPS printing service for real printer commu
 | GET | `/api/print?action=details&printer=NAME` | Get printer details |
 | GET | `/api/print?action=queue` | View active CUPS print queue |
 | POST | `/api/print` | Print a file, add/remove system printer |
+| POST | `/api/print-server/register` | Register a print server |
+| POST | `/api/print-server/heartbeat` | Server heartbeat |
+| GET | `/api/print-server/status` | Connection health check |
+| GET | `/api/print-server/jobs/dispatch` | Claim pending job |
+| POST | `/api/print-server/jobs/push` | Push new print job |
+| PATCH | `/api/print-server/jobs/[id]/status` | Update job status |
 
 ## Authentication & Authorization
 
 - **Role-based access control** via NextAuth `authorized` callback in `src/proxy.ts`
+- 4 roles: SUPER_ADMIN, SHOP_OWNER, STAFF, CUSTOMER
 - Route protection:
-  - `/shop/*` → SHOP_OWNER or STAFF only (redirects CUSTOMER to `/customer/dashboard`)
-  - `/customer/*` → CUSTOMER only (redirects others to `/shop/dashboard`)
-  - `/admin/*` → SUPER_ADMIN only
-  - `/auth/*` → redirects logged-in users to their role-based dashboard
+  - `/shop/*` → SHOP_OWNER or STAFF only
+  - `/customer/*` → CUSTOMER only
+  - `/auth/*` → redirects logged-in users to their dashboard
 - JWT session strategy with Credentials (email/password + bcrypt) and Google OAuth providers
-- Login credentials:
-  - Owner: `owner@printq.test` / `password123`
-  - Customer: `customer@test.com` / `password123`
+
+## QR Code System
+
+- Each shop has a unique QR token linking customers to that shop
+- **QR Display** — Shown on dashboard, customer scans to connect
+- **Camera Scanner** — Built-in html5-qrcode scanner with configurable overlay
+- **Token Security** — 24h token expiry, secure generation, `crypto.timingSafeEqual` verification
 
 ## File Upload (Uploadthing)
 
 - Uploadthing v7 handles file storage (S3-compatible)
 - File types: PDF (32MB, up to 10), DOCX/DOC (16MB, up to 10), images PNG/JPG (16MB, up to 10)
-- Flow: Client-side drag-and-drop → Uploadthing upload → Persistent URL stored in `PrintFile` record
-- Files are re-downloaded from Uploadthing when sending to a physical printer
+- Flow: Client drag-and-drop → Uploadthing upload → URL stored in `PrintFile`
+- Files re-downloaded from Uploadthing when sending to physical printer
 
 ## Payment Processing (Stripe)
 
-- Stripe integration ready with webhook handler at `/api/webhooks/stripe`
+- Stripe integration with webhook handler at `/api/webhooks/stripe`
+- Payment methods: Card (Stripe Payment Intents), Pay Later (cash at shop)
 - Payment status tracking: PENDING → PAID → FAILED → REFUNDED
 - Invoice generation with Stripe invoice IDs
-- Requires real Stripe API keys in `.env`
+
+## Testing
+
+```bash
+# 63 E2E tests — endpoint availability and response codes
+./test-e2e.sh
+
+# 55 interaction tests — cross-component workflows
+./test-interaction.sh
+```
+
+Test coverage: route accessibility, auth redirection, cross-role protection, QR flow, order lifecycle, payment flow, data integrity.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL 14+
-- npm / pnpm / yarn
+- PostgreSQL 14+ (or Neon cloud)
+- npm
 - CUPS (macOS: built-in, Linux: `sudo apt install cups`)
 
 ### Installation
 
 ```bash
-# Clone and install
 cd printq
 npm install
-
-# Copy environment variables
 cp .env.example .env
 ```
 
@@ -331,6 +359,7 @@ cp .env.example .env
 # Required
 DATABASE_URL="postgresql://user:password@localhost:5432/printq"
 NEXTAUTH_SECRET="generate-a-random-secret"
+NEXTAUTH_URL="http://localhost:3000"
 UPLOADTHING_SECRET="sk_live_..."   # Get from uploadthing.com
 UPLOADTHING_APP_ID="..."           # Get from uploadthing.com
 
@@ -346,10 +375,10 @@ RESEND_API_KEY="re_..."
 ### Database Setup
 
 ```bash
-# Push schema to PostgreSQL
+# Push schema to PostgreSQL (or Neon)
 npx prisma db push
 
-# Seed with test data
+# (Optional) Seed with test data
 npx prisma db seed
 
 # (Optional) View data
@@ -363,26 +392,40 @@ npm run dev
 # → http://localhost:3000
 ```
 
+### Remote Print Server (optional, for cloud deployments)
+
+```bash
+# On a machine with CUPS printers:
+export PRINTQ_URL="https://your-vercel-app.vercel.app"
+export PRINTQ_TOKEN="<token-from-settings-page>"
+export PRINTQ_NAME="office-printer-server"
+
+node print-server.js
+```
+
 ## UI & Theming
 
 - **TailwindCSS v4** with CSS variables in `globals.css`
-- Semantic color tokens: `--primary`, `--success` (green), `--warning` (amber), `--nav` (dark navy)
-- Custom shadow tokens: `--shadow-card`, `--shadow-dropdown`, `--shadow-modal`, `--shadow-button`
+- Semantic color tokens: `--primary`, `--success`, `--warning`, `--nav` (dark navy)
+- Custom shadow tokens: `--shadow-card`, `--shadow-dropdown`, `--shadow-modal`
 - Dark mode via `.dark` class with navy-toned backgrounds
-- Role-aware sidebars: Admin uses `bg-nav` (dark navy), shop/customer use `bg-background`
-- Framer Motion animations throughout for page transitions, list entries, hover effects
+- Role-aware sidebars
+- Framer Motion animations for page transitions, list entries, hover effects
+- React Joyride onboarding tour for new users
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start development server with Turbopack |
-| `npm run build` | Production build |
+| `npm run build` | Production build (prisma generate + next build) |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npx prisma db push` | Push schema to database |
 | `npx prisma db seed` | Seed test data |
 | `npx prisma studio` | Open Prisma GUI |
+| `./test-e2e.sh` | Run 63 E2E tests |
+| `./test-interaction.sh` | Run 55 interaction tests |
 
 ## Deployment
 
@@ -393,7 +436,6 @@ npm run build
 # Configure DATABASE_URL, NEXTAUTH_SECRET, UPLOADTHING_* in Vercel dashboard
 ```
 
-For the printing system to work in production, the server must have CUPS installed and access to network printers.
-# PrintQ
-# PrintQ
-# PrintQ
+For printing in production:
+- **Self-hosted**: Machine must have CUPS + access to network printers
+- **Vercel**: Run `print-server.js` on a local machine with CUPS printers

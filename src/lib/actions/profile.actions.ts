@@ -93,7 +93,7 @@ export async function getCustomerDashboardAction() {
 
   if (!customer) return { stats: { totalOrders: 0, pagesPrinted: 0, totalSpent: 0, activeOrders: 0 }, recentOrders: [] }
 
-  const [orders, activeOrders, totalPages, totalSpent, totalOrders] = await Promise.all([
+  const [orders, activeOrders, aggregation] = await Promise.all([
     prisma.order.findMany({
       where: { customerId: customer.id },
       include: { shop: { select: { name: true } } },
@@ -105,22 +105,16 @@ export async function getCustomerDashboardAction() {
     }),
     prisma.order.aggregate({
       where: { customerId: customer.id },
-      _sum: { pages: true },
-    }),
-    prisma.order.aggregate({
-      where: { customerId: customer.id },
-      _sum: { total: true },
-    }),
-    prisma.order.count({
-      where: { customerId: customer.id },
+      _sum: { pages: true, total: true },
+      _count: true,
     }),
   ])
 
   return {
     stats: {
-      totalOrders,
-      pagesPrinted: totalPages._sum.pages ?? 0,
-      totalSpent: totalSpent._sum.total ?? 0,
+      totalOrders: aggregation._count,
+      pagesPrinted: aggregation._sum.pages ?? 0,
+      totalSpent: aggregation._sum.total ?? 0,
       activeOrders,
     },
     recentOrders: orders,

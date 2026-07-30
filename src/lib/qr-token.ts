@@ -1,11 +1,12 @@
 import { createHmac, timingSafeEqual } from "crypto"
 
-const SECRET = process.env.QR_SECRET || process.env.NEXTAUTH_SECRET
-if (!SECRET) {
-  throw new Error("QR_SECRET or NEXTAUTH_SECRET must be set")
-}
-
 const TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+function getSecret(): string {
+  const secret = process.env.QR_SECRET || process.env.NEXTAUTH_SECRET
+  if (!secret) throw new Error("QR_SECRET or NEXTAUTH_SECRET must be set")
+  return secret
+}
 
 function b64url(input: string): string {
   return Buffer.from(input).toString("base64url")
@@ -16,7 +17,7 @@ function fromB64url(input: string): string {
 }
 
 export function generateShortCode(shopId: string): string {
-  const hash = createHmac("sha256", SECRET!).update(`short:${shopId}`).digest()
+  const hash = createHmac("sha256", getSecret()).update(`short:${shopId}`).digest()
   let num = 0n
   for (let i = 0; i < 4; i++) num = (num << 8n) + BigInt(hash[i])
   return num.toString(36).padStart(6, "0").slice(0, 6).toUpperCase()
@@ -24,7 +25,7 @@ export function generateShortCode(shopId: string): string {
 
 export function generateQrToken(shopId: string): string {
   const payload = `${shopId}:${Date.now()}`
-  const signature = createHmac("sha256", SECRET!).update(payload).digest("hex")
+  const signature = createHmac("sha256", getSecret()).update(payload).digest("hex")
   return b64url(`${payload}:${signature}`)
 }
 
@@ -36,7 +37,7 @@ export function verifyQrToken(token: string): { shopId: string; valid: boolean; 
 
     const payload = decoded.slice(0, lastColon)
     const signature = decoded.slice(lastColon + 1)
-    const expected = createHmac("sha256", SECRET!).update(payload).digest("hex")
+    const expected = createHmac("sha256", getSecret()).update(payload).digest("hex")
 
     if (signature.length !== expected.length) return { shopId: "", valid: false, error: "Invalid signature" }
     if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {

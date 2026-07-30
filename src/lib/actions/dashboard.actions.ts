@@ -21,21 +21,31 @@ export async function getShopDashboardAction() {
     queueCount,
     printerCount,
     onlinePrinters,
+    statusCounts,
   ] = await Promise.all([
     prisma.order.count({ where: { shopId: shop.id } }),
     prisma.order.aggregate({ where: { shopId: shop.id }, _sum: { total: true } }),
     prisma.order.aggregate({ where: { shopId: shop.id }, _sum: { pages: true } }),
-    prisma.order.count({ where: { shopId: shop.id, status: { in: ["PENDING", "RECEIVED", "IN_QUEUE", "PROCESSING", "PRINTING", "QUALITY_CHECK"] } } }),
+    prisma.order.count({ where: { shopId: shop.id, status: { in: ["PENDING", "IN_QUEUE", "PROCESSING", "PRINTING", "QUALITY_CHECK"] } } }),
     prisma.order.findMany({
       where: { shopId: shop.id },
-      include: { customer: true },
+      select: { id: true, orderId: true, status: true, pages: true, total: true, createdAt: true, customer: { select: { name: true, email: true } } },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.queueItem.count({ where: { shopId: shop.id, status: { in: ["QUEUED", "PRINTING"] } } }),
     prisma.printer.count({ where: { shopId: shop.id } }),
     prisma.printer.count({ where: { shopId: shop.id, status: "ONLINE" } }),
+    prisma.order.groupBy({
+      by: ["status"],
+      where: { shopId: shop.id },
+      _count: { id: true },
+    }),
   ])
+
+  const statusDist = Object.fromEntries(
+    statusCounts.map((s) => [s.status, s._count.id])
+  ) as Record<string, number>
 
   return {
     stats: {
@@ -48,6 +58,7 @@ export async function getShopDashboardAction() {
       onlinePrinters,
     },
     recentOrders,
+    statusDist,
   }
 }
 
@@ -67,6 +78,7 @@ export async function getShopOrdersAction(status?: string) {
     where: where as never,
     include: { customer: true, files: true },
     orderBy: { createdAt: "desc" },
+    take: 50,
   })
 }
 

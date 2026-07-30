@@ -115,30 +115,32 @@ export async function registerAction(_prevState: unknown, formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        phone,
-        password: hashedPassword,
-        role: "SHOP_OWNER",
-        emailVerified: new Date(),
-      },
-    })
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          phone,
+          password: hashedPassword,
+          role: "SHOP_OWNER",
+          emailVerified: new Date(),
+        },
+      })
 
-    await prisma.shop.create({
-      data: {
-        name: shopName,
-        slug: shopSlug,
-        address,
-        city,
-        state,
-        pinCode,
-        phone: shopPhone,
-        email,
-        ownerId: user.id,
-        status: "ACTIVE",
-      },
+      await tx.shop.create({
+        data: {
+          name: shopName,
+          slug: shopSlug,
+          address,
+          city,
+          state,
+          pinCode,
+          phone: shopPhone,
+          email,
+          ownerId: user.id,
+          status: "ACTIVE",
+        },
+      })
     })
 
     try {

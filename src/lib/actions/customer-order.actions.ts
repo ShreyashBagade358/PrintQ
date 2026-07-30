@@ -58,26 +58,28 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
     : await prisma.shop.findFirst()
   if (!shop) return { error: "No shop found. Please contact support." }
 
-  let customer = await prisma.customer.findUnique({
-    where: { email_shopId: { email: customerEmail, shopId: shop.id } },
+  const customer = await prisma.$transaction(async (tx) => {
+    let c = await tx.customer.findUnique({
+      where: { email_shopId: { email: customerEmail, shopId: shop.id } },
+    })
+    if (!c) {
+      c = await tx.customer.create({
+        data: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          shopId: shop.id,
+          userId: session.user.id,
+        },
+      })
+    } else if (!c.userId) {
+      c = await tx.customer.update({
+        where: { id: c.id },
+        data: { userId: session.user.id },
+      })
+    }
+    return c
   })
-
-  if (!customer) {
-    customer = await prisma.customer.create({
-      data: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        shopId: shop.id,
-        userId: session.user.id,
-      },
-    })
-  } else if (!customer.userId) {
-    customer = await prisma.customer.update({
-      where: { id: customer.id },
-      data: { userId: session.user.id },
-    })
-  }
 
   const pricingRule = await prisma.pricingRule.findFirst({
     where: { shopId: shop.id, paperSize, colorType: color === "Color" ? "color" : "black_white", isActive: true },
@@ -147,18 +149,20 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
   ))
 
   if (paymentMethod !== "pay_later") {
-    await prisma.queueItem.create({
-      data: {
-        position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-        status: "QUEUED",
-        shopId: shop.id,
-        orderId: order.id,
-      },
-    })
-
-    await prisma.customer.update({
-      where: { id: customer.id },
-      data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
+    await prisma.$transaction(async (tx) => {
+      const count = await tx.queueItem.count({ where: { shopId: shop.id } })
+      await tx.queueItem.create({
+        data: {
+          position: count + 1,
+          status: "QUEUED",
+          shopId: shop.id,
+          orderId: order.id,
+        },
+      })
+      await tx.customer.update({
+        where: { id: customer.id },
+        data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
+      })
     })
   }
 
@@ -269,16 +273,16 @@ export async function getCustomerOrderDetailAction(id: string) {
 
   if (!order) return null
 
-  const customer = await prisma.customer.findFirst({
+  let customer = await prisma.customer.findFirst({
     where: { userId: session.user.id },
   })
   if (!customer && session.user.email) {
-    const c = await prisma.customer.findFirst({
+    customer = await prisma.customer.findFirst({
       where: { email: session.user.email },
     })
-    if (c && !c.userId) {
+    if (customer && !customer.userId) {
       await prisma.customer.update({
-        where: { id: c.id },
+        where: { id: customer.id },
         data: { userId: session.user.id },
       })
     }

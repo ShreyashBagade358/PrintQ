@@ -101,18 +101,20 @@ export async function createOrderAction(_prevState: unknown, formData: FormData)
     },
   })
 
-  await prisma.queueItem.create({
-    data: {
-      position: (await prisma.queueItem.count({ where: { shopId: shop.id } })) + 1,
-      status: "QUEUED",
-      shopId: shop.id,
-      orderId: order.id,
-    },
-  })
-
-  await prisma.customer.update({
-    where: { id: customer.id },
-    data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
+  await prisma.$transaction(async (tx) => {
+    const count = await tx.queueItem.count({ where: { shopId: shop.id } })
+    await tx.queueItem.create({
+      data: {
+        position: count + 1,
+        status: "QUEUED",
+        shopId: shop.id,
+        orderId: order.id,
+      },
+    })
+    await tx.customer.update({
+      where: { id: customer.id },
+      data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
+    })
   })
 
   revalidatePath("/shop/orders")
