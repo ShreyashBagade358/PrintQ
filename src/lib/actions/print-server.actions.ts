@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
+import { getSyncedPrinters } from "@/lib/print-server-utils"
 import crypto from "crypto"
 
 export async function registerPrintServerAction(name: string) {
@@ -65,4 +66,27 @@ export async function deletePrintServerAction(serverId: string) {
   await prisma.printServer.delete({ where: { id: serverId } })
 
   return { success: true }
+}
+
+export async function discoverBridgePrintersAction() {
+  const session = await auth()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const shop = await prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+  if (!shop) return { error: "No shop found" }
+
+  const printers = await getSyncedPrinters(shop.id)
+  if (printers.length === 0) {
+    return { error: "No online print server or no printers discovered. Make sure the print server is running on the computer connected to your printers." }
+  }
+
+  return {
+    printers: printers.map((p) => ({
+      name: p.name,
+      model: p.model,
+      status: p.status,
+    })),
+  }
 }

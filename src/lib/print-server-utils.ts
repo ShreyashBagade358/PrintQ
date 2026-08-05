@@ -12,6 +12,23 @@ export async function getActivePrintServerForShop(shopId: string) {
   })
 }
 
+export interface SyncedPrinter {
+  name: string
+  status: string
+  model: string
+  ip: string | null
+  uri: string | null
+  capabilities: { color: boolean; duplex: boolean; paperSizes: string[] }
+  inkLevel: number | null
+  source: string
+}
+
+export async function getSyncedPrinters(shopId: string): Promise<SyncedPrinter[]> {
+  const server = await getActivePrintServerForShop(shopId)
+  if (!server?.printers || !Array.isArray(server.printers)) return []
+  return server.printers as unknown as SyncedPrinter[]
+}
+
 export async function createPrintJob(data: {
   shopId: string
   printerName: string

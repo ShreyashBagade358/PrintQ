@@ -584,6 +584,8 @@ model PrintServer {
 
   printJobs PrintJob[]
 
+  printers Json?
+
   createdAt DateTime @default(now())
 
   @@index([shopId])

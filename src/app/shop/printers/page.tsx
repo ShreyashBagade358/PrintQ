@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getPrintersAction, addPrinterAction, updatePrinterStatusAction, updatePrinterLevelsAction, removePrinterAction } from "@/lib/actions/printer.actions"
-import { getPrintServersAction, registerPrintServerAction, deletePrintServerAction } from "@/lib/actions/print-server.actions"
+import { getPrintServersAction, registerPrintServerAction, deletePrintServerAction, discoverBridgePrintersAction } from "@/lib/actions/print-server.actions"
 import { Plus, Printer, Search, Wifi, WifiOff, Trash2, Settings, RefreshCw, Radio, Download, Server, Copy, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -143,21 +143,24 @@ export default function ShopPrintersPage() {
   const handleScanPrinters = async () => {
     setScanning(true)
     try {
-      const res = await fetch("/api/print?action=discover")
-      const data = await res.json()
-      if (data.printers) {
-        setSystemPrinters(data.printers)
-        setAddMode("discover")
-        if (data.printers.length === 0) {
-          toast.info("No printers found on this system. Try adding via IPP.")
-        } else {
-          toast.success(`Found ${data.printers.length} printer(s)`)
-        }
+      const result = await discoverBridgePrintersAction()
+      if ("error" in result) {
+        toast.error(result.error || "Failed to scan for printers")
+        return
+      }
+      const printers = result.printers
+      setSystemPrinters(printers)
+      setAddMode("discover")
+      if (printers.length === 0) {
+        toast.info("No printers found on this system. Try adding via IPP.")
+      } else {
+        toast.success(`Found ${printers.length} printer(s)`)
       }
     } catch {
       toast.error("Failed to scan for printers")
+    } finally {
+      setScanning(false)
     }
-    setScanning(false)
   }
 
   const handleImportSystemPrinter = async (printer: { name: string; model: string }) => {
@@ -369,7 +372,7 @@ export default function ShopPrintersPage() {
                       {scanning ? (
                         <><RefreshCw className="h-4 w-4 animate-spin" /> Scanning...</>
                       ) : (
-                        <><Radio className="h-4 w-4" /> Discover CUPS Printers</>
+                        <><Radio className="h-4 w-4" /> Discover Printers</>
                       )}
                     </Button>
 
