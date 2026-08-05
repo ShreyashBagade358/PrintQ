@@ -72,14 +72,41 @@ export async function discoverBridgePrintersAction() {
   const session = await auth()
   if (!session?.user) return { error: "Unauthorized" }
 
+  const userId = session.user.id
+
   const shop = await prisma.shop.findFirst({
-    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+    where: { OR: [{ ownerId: userId }, { staff: { some: { userId } } }] },
   })
-  if (!shop) return { error: "No shop found" }
+  if (!shop) {
+    const owned = await prisma.shop.count({ where: { ownerId: userId } })
+    console.error("[discoverBridgePrintersAction] no shop for user", {
+      email: session.user.email,
+      role: session.user.role,
+      userId,
+      shopsOwned: owned,
+    })
+    return {
+      error: `Your account (${session.user.email}) has no shop linked in this app. Log in with the account that owns the shop, or create/link a shop for this account.`,
+    }
+  }
+
+  const server = await prisma.printServer.findFirst({
+    where: { shopId: shop.id },
+    orderBy: { lastSeen: "desc" },
+  })
 
   const printers = await getSyncedPrinters(shop.id)
+  if (!server || server.status !== "ONLINE" || !server.lastSeen || Date.now() - server.lastSeen.getTime() > 2 * 60 * 1000) {
+    return {
+      error:
+        "No online print server. Make sure the print server (node print-server.js) is running on the computer connected to your printers, then try again.",
+    }
+  }
   if (printers.length === 0) {
-    return { error: "No online print server or no printers discovered. Make sure the print server is running on the computer connected to your printers." }
+    return {
+      error:
+        "Print server is online, but no printers were discovered. Check that the printers are powered on and connected to the same WiFi as the server.",
+    }
   }
 
   return {
