@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { useState, useCallback } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { DashboardNavbar } from "@/components/layout/dashboard-navbar"
+import { TutorialProvider } from "@/components/onboarding/tutorial-provider"
 
 const titleMap: Record<string, string> = {
   dashboard: "Dashboard",
@@ -42,6 +43,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           {children}
         </main>
       </div>
+      <TutorialProvider />
     </div>
   )
 }

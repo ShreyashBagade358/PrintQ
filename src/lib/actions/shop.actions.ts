@@ -221,3 +221,119 @@ export async function getShopProfileStatsAction() {
     totalSpent: totalSpent._sum.total ?? 0,
   }
 }
+
+async function getSessionShop() {
+  const session = await auth()
+  if (!session?.user) return null
+  return prisma.shop.findFirst({
+    where: { OR: [{ ownerId: session.user.id }, { staff: { some: { userId: session.user.id } } }] },
+  })
+}
+
+const pricingRuleInputSchema = z.object({
+  id: z.string().optional(),
+  paperSize: z.string().min(1),
+  colorType: z.enum(["black_white", "color"]),
+  pricePerPage: z.number().positive(),
+  minCopies: z.number().int().min(1),
+})
+
+export async function getPricingAction() {
+  const shop = await getSessionShop()
+  if (!shop) return { error: "No shop found" }
+
+  const [rules, finishing] = await Promise.all([
+    prisma.pricingRule.findMany({
+      where: { shopId: shop.id, isActive: true },
+      orderBy: [{ paperSize: "asc" }, { colorType: "asc" }],
+    }),
+    prisma.shop.findUnique({
+      where: { id: shop.id },
+      select: {
+        staplingCharge: true,
+        spiralCharge: true,
+        hardcoverCharge: true,
+        laminationCharge: true,
+      },
+    }),
+  ])
+
+  return { rules, finishing }
+}
+
+export async function upsertPricingRuleAction(input: {
+  id?: string
+  paperSize: string
+  colorType: "black_white" | "color"
+  pricePerPage: number
+  minCopies: number
+}) {
+  const shop = await getSessionShop()
+  if (!shop) return { error: "No shop found" }
+
+  const validated = pricingRuleInputSchema.safeParse(input)
+  if (!validated.success) return { error: validated.error.errors[0].message }
+  const { id, paperSize, colorType, pricePerPage, minCopies } = validated.data
+
+  try {
+    if (id) {
+      const existing = await prisma.pricingRule.findFirst({ where: { id, shopId: shop.id } })
+      if (!existing) return { error: "Pricing rule not found" }
+      const rule = await prisma.pricingRule.update({
+        where: { id },
+        data: { paperSize, colorType, pricePerPage, minCopies },
+      })
+      revalidatePath("/shop/pricing")
+      return { success: true, rule }
+    }
+
+    const rule = await prisma.pricingRule.upsert({
+      where: { shopId_paperSize_colorType: { shopId: shop.id, paperSize, colorType } },
+      update: { pricePerPage, minCopies, isActive: true },
+      create: { shopId: shop.id, paperSize, colorType, pricePerPage, minCopies },
+    })
+    revalidatePath("/shop/pricing")
+    return { success: true, rule }
+  } catch {
+    return { error: "A rule for this paper size and type already exists" }
+  }
+}
+
+export async function deletePricingRuleAction(id: string) {
+  const shop = await getSessionShop()
+  if (!shop) return { error: "No shop found" }
+
+  const existing = await prisma.pricingRule.findFirst({ where: { id, shopId: shop.id } })
+  if (!existing) return { error: "Pricing rule not found" }
+
+  await prisma.pricingRule.delete({ where: { id } })
+  revalidatePath("/shop/pricing")
+  return { success: true }
+}
+
+export async function saveFinishingChargesAction(input: {
+  stapling: number
+  spiral: number
+  hardcover: number
+  lamination: number
+}) {
+  const shop = await getSessionShop()
+  if (!shop) return { error: "No shop found" }
+
+  const values = [input.stapling, input.spiral, input.hardcover, input.lamination]
+  if (values.some((v) => !Number.isFinite(v) || v < 0)) {
+    return { error: "Charges must be zero or greater" }
+  }
+
+  await prisma.shop.update({
+    where: { id: shop.id },
+    data: {
+      staplingCharge: input.stapling,
+      spiralCharge: input.spiral,
+      hardcoverCharge: input.hardcover,
+      laminationCharge: input.lamination,
+    },
+  })
+  revalidatePath("/shop/pricing")
+  return { success: true }
+}

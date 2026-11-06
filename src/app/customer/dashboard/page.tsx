@@ -8,7 +8,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { getCustomerDashboardAction } from "@/lib/actions/profile.actions"
-import { TutorialProvider } from "@/components/onboarding/tutorial-provider"
 import { formatCurrency, formatDateTime } from "@/lib/utils"
 
 interface DashboardData {
@@ -182,7 +181,6 @@ export default function CustomerDashboardPage() {
                   </CardContent>
                 </Card>
               </div>
-            <TutorialProvider />
             </>
           )}
     </div>

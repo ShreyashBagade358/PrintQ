@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 
 const CORS_HEADERS: Record<string, string> = {
@@ -9,24 +8,24 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Max-Age": "86400",
 }
 
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+function applyCors(response: NextResponse) {
+  Object.entries(CORS_HEADERS).forEach(([key, value]) => response.headers.set(key, value))
+}
 
-  if (pathname.startsWith("/api/")) {
-    if (request.method === "OPTIONS") {
-      const res = new NextResponse(null, { status: 204 })
-      Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v))
-      return res
-    }
-    const response = NextResponse.next()
-    if (request.headers.get("origin")) {
-      Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v))
-    }
+export default auth((request) => {
+  const { pathname } = request.nextUrl
+  if (!pathname.startsWith("/api")) return
+
+  if (request.method === "OPTIONS") {
+    const response = new NextResponse(null, { status: 204 })
+    applyCors(response)
     return response
   }
 
-  return auth(request)
-}
+  const response = NextResponse.next()
+  if (request.headers.get("origin")) applyCors(response)
+  return response
+})
 
 export const config = {
   matcher: ["/api/:path*", "/customer/:path*", "/shop/:path*"],

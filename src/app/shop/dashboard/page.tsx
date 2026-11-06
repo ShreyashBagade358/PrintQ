@@ -10,7 +10,6 @@ import { getShopDashboardAction } from "@/lib/actions/dashboard.actions"
 import { formatCurrency, formatDateTime } from "@/lib/utils"
 import { QrDisplay } from "@/components/shop/qr-display"
 import Link from "next/link"
-import { TutorialProvider } from "@/components/onboarding/tutorial-provider"
 
 interface DashboardData {
   stats: {
@@ -252,7 +251,6 @@ export default function ShopDashboardPage() {
             </CardContent>
           </Card>
         </div>
-      <TutorialProvider />
     </>
   )
 }

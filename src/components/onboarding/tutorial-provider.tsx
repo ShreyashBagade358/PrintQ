@@ -10,25 +10,27 @@ export function TutorialProvider() {
   const { data: session } = useSession()
   const role = session?.user?.role
   const [run, setRun] = useState(false)
-  const [loaded, setLoaded] = useState(false)
+  const [tourKey, setTourKey] = useState(0)
 
   const storageKey = role === "CUSTOMER" ? "printq-tour-customer" : role === "SHOP_OWNER" ? "printq-tour-shop" : null
 
   useEffect(() => {
-    setLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (!loaded || !storageKey) return
+    if (!storageKey) return
     const seen = localStorage.getItem(storageKey)
     if (!seen) {
+      // Mark as seen immediately so the tour auto-runs only once per role.
+      // It can still be replayed any time via the "?" button in the navbar.
+      localStorage.setItem(storageKey, "true")
       const timer = setTimeout(() => setRun(true), 600)
       return () => clearTimeout(timer)
     }
-  }, [loaded, storageKey])
+  }, [storageKey])
 
   useEffect(() => {
-    const handler = () => setRun(true)
+    const handler = () => {
+      setTourKey((key) => key + 1)
+      setRun(true)
+    }
     window.addEventListener("start-tutorial", handler)
     return () => window.removeEventListener("start-tutorial", handler)
   }, [])
@@ -47,10 +49,9 @@ export function TutorialProvider() {
 
   const steps = role === "CUSTOMER" ? customerTourSteps : shopTourSteps
 
-  if (!loaded) return null
-
   return (
     <Joyride
+      key={tourKey}
       steps={steps}
       run={run}
       continuous

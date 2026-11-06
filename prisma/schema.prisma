@@ -177,6 +177,10 @@ model Shop {
   favicon        String?
   qrToken        String?   @unique
   qrRegeneratedAt DateTime?
+  staplingCharge   Float @default(5)
+  spiralCharge     Float @default(2)
+  hardcoverCharge  Float @default(150)
+  laminationCharge Float @default(20)
 
   ownerId String
   owner   User   @relation("ShopOwner", fields: [ownerId], references: [id])
