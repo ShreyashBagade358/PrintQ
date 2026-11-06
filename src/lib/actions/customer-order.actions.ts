@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { createNotificationAction } from "./notification.actions"
+import { getStripeInstance } from "@/lib/stripe"
+import { dispatchAutomationOrder } from "@/lib/automation"
 
 const customerOrderSchema = z.object({
   customerEmail: z.string().email(),
@@ -23,6 +25,7 @@ const customerOrderSchema = z.object({
   customPageRange: z.string().optional(),
   finishingOptions: z.array(z.string()).default([]),
   paymentMethod: z.enum(["card", "pay_later"]).default("card"),
+  paymentIntentId: z.string().optional(),
   shopId: z.string().optional(),
   files: z.array(z.object({
     name: z.string(),
@@ -50,7 +53,7 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
     customerEmail, customerName, customerPhone, pages, copies,
     color, paperSize, sides, finishing, notes,
     orientation, printQuality, pageRange, customPageRange, finishingOptions,
-    paymentMethod, files, shopId: connectedShopId,
+    paymentMethod, paymentIntentId, files, shopId: connectedShopId,
   } = validated.data
 
   const shop = connectedShopId
@@ -94,11 +97,31 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
 
   const finishingLabel = finishing || (finishingOptions.length > 0 ? finishingOptions.join(", ") : undefined)
 
+  let paymentStatus: "PAID" | "PENDING" = "PENDING"
+  let paidAt: Date | null = null
+  if (paymentMethod !== "pay_later" && paymentIntentId) {
+    try {
+      const intent = await getStripeInstance().paymentIntents.retrieve(paymentIntentId)
+      if (
+        intent.status === "succeeded" &&
+        intent.metadata?.userId === session.user.id &&
+        intent.currency === "inr" &&
+        intent.amount > 0
+      ) {
+        paymentStatus = "PAID"
+        paidAt = new Date()
+      }
+    } catch {
+    }
+  }
+
   const orderId = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
   const order = await prisma.order.create({
     data: {
       orderId,
+      paymentStatus,
+      paidAt,
       pages,
       copies,
       color,
@@ -164,6 +187,10 @@ export async function createCustomerOrderAction(_prevState: unknown, formData: F
         data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
       })
     })
+  }
+
+  if (paymentStatus === "PAID") {
+    await dispatchAutomationOrder(shop.id, order.id).catch(() => {})
   }
 
   revalidatePath("/shop/orders")

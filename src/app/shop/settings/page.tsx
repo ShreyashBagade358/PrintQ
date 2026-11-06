@@ -1,26 +1,48 @@
 "use client"
 
+import { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Save, Upload, Shield, Bell, Eye, Server, Copy, ExternalLink, Terminal } from "lucide-react"
+import { Save, Upload, Server, Terminal, Sparkles } from "lucide-react"
+import { AutomationPanel } from "@/components/shop/automation-panel"
 
 export default function ShopSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-muted-foreground">
+          Loading settings…
+        </div>
+      }
+    >
+      <ShopSettingsContent />
+    </Suspense>
+  )
+}
+
+function ShopSettingsContent() {
+  const searchParams = useSearchParams()
+  const [tab, setTab] = useState(searchParams.get("tab") || "general")
+
   return (
     <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Tabs defaultValue="general" className="space-y-6">
+            <Tabs value={tab} onValueChange={setTab} className="space-y-6">
               <TabsList>
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="branding">Branding</TabsTrigger>
                 <TabsTrigger value="print-server">Print Server</TabsTrigger>
+                <TabsTrigger value="automation" className="gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" /> Automation
+                </TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
               </TabsList>
@@ -99,7 +121,7 @@ export default function ShopSettingsPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <p className="text-sm text-muted-foreground">
-                      When hosted on Vercel, PrintQ can't print directly (no CUPS). The print server runs on
+                      When hosted on Vercel, PrintQ can&apos;t print directly (no CUPS). The print server runs on
                       your shop computer, polls Vercel for jobs, and sends them to your local printers.
                     </p>
 
@@ -122,7 +144,7 @@ export default function ShopSettingsPage() {
                             <p className="text-muted-foreground"># Copy print-server.js from your project, then:</p>
                             <p>PRINTQ_URL=https://your-app.vercel.app \</p>
                             <p>PRINTQ_TOKEN=psk_xxx \</p>
-                            <p>PRINTQ_NAME="Front Desk" \</p>
+                            <p>PRINTQ_NAME=&quot;Front Desk&quot; \</p>
                             <p>node print-server.js</p>
                           </div>
                         </li>
@@ -156,6 +178,10 @@ export default function ShopSettingsPage() {
                     </p>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="automation">
+                <AutomationPanel />
               </TabsContent>
 
               <TabsContent value="security">

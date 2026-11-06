@@ -251,7 +251,7 @@ function CustomerUploadContent() {
     setShowPaymentChoice(true)
   }
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (paymentIntentId?: string) => {
     const data = pendingOrderRef.current
     if (!data) return
 
@@ -274,6 +274,7 @@ function CustomerUploadContent() {
       pageRange: formValues.pageRange,
       customPageRange: formValues.pageRange === "custom" ? formValues.customPageRange : undefined,
       finishingOptions: formValues.finishingOptions,
+      paymentIntentId,
       notes: formValues.notes || undefined,
       files: uploadedFiles.map((f) => ({
         name: f.name,
@@ -912,7 +913,7 @@ export default function CustomerUploadPage() {
 
 function PaymentFormComponent({ amount, onSuccess, onError, loading }: {
   amount: number
-  onSuccess: () => void
+  onSuccess: (paymentIntentId?: string) => void
   onError: (msg: string) => void
   loading: boolean
 }) {
@@ -945,7 +946,7 @@ function PaymentFormComponent({ amount, onSuccess, onError, loading }: {
     if (error) {
       onError(error.message || "Payment failed")
     } else if (paymentIntent?.status === "succeeded") {
-      onSuccess()
+      onSuccess(paymentIntent.id)
     } else {
       onError(`Payment ${paymentIntent?.status}. Please try again.`)
     }

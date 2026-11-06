@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { handleAutomationPrintJobUpdate } from "@/lib/automation"
 
 export async function POST(
   req: NextRequest,
@@ -34,6 +35,8 @@ export async function POST(
       where: { id },
       data: { status, error, jobId },
     })
+
+    await handleAutomationPrintJobUpdate(id, status, error).catch(() => {})
 
     if (status === "COMPLETED" || status === "FAILED") {
       const order = await prisma.order.findFirst({

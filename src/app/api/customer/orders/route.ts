@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { requireApiAuth, apiError } from "@/lib/api-auth"
+import { getStripeInstance } from "@/lib/stripe"
+import { dispatchAutomationOrder } from "@/lib/automation"
 
 export const runtime = "nodejs"
 
@@ -22,6 +24,7 @@ const createOrderSchema = z.object({
   customPageRange: z.string().optional(),
   finishingOptions: z.array(z.string()).default([]),
   paymentMethod: z.enum(["card", "pay_later"]).default("card"),
+  paymentIntentId: z.string().optional(),
   shopId: z.string().optional(),
   files: z.array(z.object({
     name: z.string(),
@@ -82,7 +85,7 @@ export async function POST(req: Request) {
     customerEmail, customerName, customerPhone, pages, copies,
     color, paperSize, sides, finishing, notes,
     orientation, printQuality, pageRange, customPageRange, finishingOptions,
-    paymentMethod, files, shopId,
+    paymentMethod, paymentIntentId, files, shopId,
   } = validated.data
 
   const shop = shopId
@@ -118,11 +121,32 @@ export async function POST(req: Request) {
   const total = amount + finishingCost - discount
 
   const finishingLabel = finishing || (finishingOptions.length > 0 ? finishingOptions.join(", ") : undefined)
+
+  let paymentStatus: "PAID" | "PENDING" = "PENDING"
+  let paidAt: Date | null = null
+  if (paymentMethod !== "pay_later" && paymentIntentId) {
+    try {
+      const intent = await getStripeInstance().paymentIntents.retrieve(paymentIntentId)
+      if (
+        intent.status === "succeeded" &&
+        intent.metadata?.userId === user!.id &&
+        intent.currency === "inr" &&
+        intent.amount > 0
+      ) {
+        paymentStatus = "PAID"
+        paidAt = new Date()
+      }
+    } catch {
+    }
+  }
+
   const orderId = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
   const order = await prisma.order.create({
     data: {
       orderId,
+      paymentStatus,
+      paidAt,
       pages,
       copies,
       color,
@@ -179,6 +203,10 @@ export async function POST(req: Request) {
         data: { totalOrders: { increment: 1 }, totalSpent: { increment: total } },
       })
     })
+  }
+
+  if (paymentStatus === "PAID") {
+    await dispatchAutomationOrder(shop.id, order.id).catch(() => {})
   }
 
   return NextResponse.json({ success: true, orderId: order.orderId, id: order.id }, { status: 201 })

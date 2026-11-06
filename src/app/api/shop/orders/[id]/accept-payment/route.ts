@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireApiAuth, apiError } from "@/lib/api-auth"
 import { createNotificationAction } from "@/lib/actions/notification.actions"
+import { dispatchAutomationOrder } from "@/lib/automation"
 
 export const runtime = "nodejs"
 
@@ -29,6 +30,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       where: { id },
       data: {
         status: "IN_QUEUE",
+        paymentStatus: "PAID",
+        paidAt: new Date(),
         estimatedReadyAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         printNotes: `${order.printNotes || ""}\n--- Payment received at shop on ${new Date().toLocaleString()} ---`.trim(),
       },
@@ -45,6 +48,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       data: { totalOrders: { increment: 1 }, totalSpent: { increment: order.total } },
     })
   }
+
+  await dispatchAutomationOrder(shop.id, order.id).catch(() => {})
 
   if (order.userId) {
     await createNotificationAction(

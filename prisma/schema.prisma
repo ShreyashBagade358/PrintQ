@@ -182,6 +182,11 @@ model Shop {
   hardcoverCharge  Float @default(150)
   laminationCharge Float @default(20)
 
+  autoWorkflowEnabled      Boolean   @default(false)
+  autoWorkflowSkipQC       Boolean   @default(false)
+  autoWorkflowPrinterName  String?
+  autoWorkflowActivatedAt  DateTime?
+
   ownerId String
   owner   User   @relation("ShopOwner", fields: [ownerId], references: [id])
 
@@ -233,6 +238,8 @@ model Order {
   id              String      @id @default(cuid())
   orderId         String      @unique
   status          OrderStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paidAt          DateTime?
   priority        QueuePriority @default(NORMAL)
   pages           Int
   copies          Int
@@ -260,6 +267,7 @@ model Order {
 
   files       PrintFile[]
   queueItems  QueueItem[]
+  printJobs   PrintJob[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -280,6 +288,8 @@ model PrintFile {
   pages   Int
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  printJobs PrintJob[]
 
   createdAt DateTime @default(now())
 
@@ -323,7 +333,11 @@ model QueueItem {
   printerId String?
   printer   Printer? @relation(fields: [printerId], references: [id])
 
-  assignedTo String?
+  assignedTo        String?
+  automationAttempts Int    @default(0)
+  lastError         String?
+
+  printJobs PrintJob[]
 
   createdAt DateTime @default(now())
 
@@ -398,6 +412,7 @@ model Plan {
   features    String[]
   limits      Json
   isActive    Boolean  @default(true)
+  automation  Boolean  @default(false)
 
   subscriptions Subscription[]
 
@@ -612,10 +627,22 @@ model PrintJob {
   printServerId String?
   printServer   PrintServer? @relation(fields: [printServerId], references: [id])
 
+  orderId String?
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  queueItemId String?
+  queueItem   QueueItem? @relation(fields: [queueItemId], references: [id], onDelete: SetNull)
+
+  printFileId String?
+  printFile   PrintFile? @relation(fields: [printFileId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([queueItemId, printFileId])
   @@index([status])
   @@index([shopId])
   @@index([printServerId])
+  @@index([orderId])
+  @@index([queueItemId])
 }

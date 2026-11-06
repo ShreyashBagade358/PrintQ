@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import {
+  dispatchAutomationOrder,
+  ensureAutomationPlan,
+  activateAutomationAfterPayment,
+} from "@/lib/automation"
 
 export const dynamic = "force-dynamic"
 
@@ -24,18 +29,65 @@ export async function POST(req: Request) {
       const planId = session.metadata?.planId
 
       if (shopId && planId) {
-        await prisma.subscription.create({
-          data: {
+        const periodStart = new Date()
+        const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        await prisma.subscription.upsert({
+          where: { shopId },
+          update: {
+            planId,
+            status: "ACTIVE",
+            stripeSubscriptionId: session.subscription as string,
+            stripeCustomerId: session.customer as string,
+            currentPeriodStart: periodStart,
+            currentPeriodEnd: periodEnd,
+          },
+          create: {
             shopId,
             planId,
             status: "ACTIVE",
             stripeSubscriptionId: session.subscription as string,
             stripeCustomerId: session.customer as string,
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            currentPeriodStart: periodStart,
+            currentPeriodEnd: periodEnd,
           },
         })
+
+        if (session.metadata?.feature === "automation") {
+          await ensureAutomationPlan()
+          await activateAutomationAfterPayment(shopId, session.metadata?.printerName || null).catch(() => {})
+        }
       }
+      break
+    }
+
+    case "payment_intent.succeeded": {
+      const intent = event.data.object
+      const orderId = intent.metadata?.orderId
+      if (!orderId) break
+
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, shopId: true, paymentStatus: true },
+      })
+      if (!order || order.paymentStatus === "PAID") break
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { paymentStatus: "PAID", paidAt: new Date() },
+      })
+      await dispatchAutomationOrder(order.shopId, order.id).catch(() => {})
+      break
+    }
+
+    case "payment_intent.payment_failed": {
+      const intent = event.data.object
+      const orderId = intent.metadata?.orderId
+      if (!orderId) break
+
+      await prisma.order.updateMany({
+        where: { id: orderId, paymentStatus: "PENDING" },
+        data: { paymentStatus: "FAILED" },
+      })
       break
     }
 
@@ -58,16 +110,18 @@ export async function POST(req: Request) {
             },
           })
 
-          await prisma.invoice.create({
-            data: {
-              invoiceId: `INV-${invoice.id}`,
-              amount: invoice.amount_paid / 100,
-              status: "PAID",
-              dueDate: new Date(invoice.period_end * 1000),
-              paidAt: new Date(),
-              stripeInvoiceId: invoice.id,
-              shopId: sub.shopId,
-            },
+          const invoiceData = {
+            amount: invoice.amount_paid / 100,
+            status: "PAID" as const,
+            dueDate: new Date(invoice.period_end * 1000),
+            paidAt: new Date(),
+            stripeInvoiceId: invoice.id,
+            shopId: sub.shopId,
+          }
+          await prisma.invoice.upsert({
+            where: { invoiceId: `INV-${invoice.id}` },
+            update: invoiceData,
+            create: { invoiceId: `INV-${invoice.id}`, ...invoiceData },
           })
         }
       }
@@ -82,10 +136,22 @@ export async function POST(req: Request) {
         : subscription.status === "canceled" ? "CANCELLED"
         : "EXPIRED"
 
+      const existing = await prisma.subscription.findFirst({
+        where: { stripeSubscriptionId: subscription.id },
+        select: { shopId: true },
+      })
+
       await prisma.subscription.updateMany({
         where: { stripeSubscriptionId: subscription.id },
         data: { status: status as never },
       })
+
+      if (existing && status !== "ACTIVE") {
+        await prisma.shop.update({
+          where: { id: existing.shopId },
+          data: { autoWorkflowEnabled: false },
+        })
+      }
       break
     }
   }

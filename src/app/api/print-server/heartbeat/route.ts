@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { processAutomationBacklog } from "@/lib/automation"
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
       where: { id: server.id },
       data: { status: "ONLINE", lastSeen: new Date(), ipAddress: ip },
     })
+
+    await processAutomationBacklog(server.shopId).catch(() => {})
 
     return NextResponse.json({ ok: true })
   } catch {
