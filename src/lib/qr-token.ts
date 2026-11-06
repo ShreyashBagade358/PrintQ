@@ -5,10 +5,12 @@ const TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
 function getSecret(): string {
   const secret = process.env.QR_SECRET || process.env.NEXTAUTH_SECRET
   if (secret) return secret
-  // Fallback: generate a temporary secret if none configured
-  // This allows QR functionality to work during development/deployment without config
-  console.warn("[QR] No QR_SECRET or NEXTAUTH_SECRET set — using temporary secret. Set NEXTAUTH_SECRET in production for stable tokens.")
-  return "temp-qr-secret-change-me"
+  // A temporary secret is acceptable ONLY in development. In production the app
+  // must have QR_SECRET or NEXTAUTH_SECRET configured, otherwise QR tokens
+  // cannot be generated or verified.
+  if (process.env.NODE_ENV === "production") return ""
+  console.warn("[QR] No QR_SECRET or NEXTAUTH_SECRET set — using temporary dev secret. Set NEXTAUTH_SECRET in production for stable tokens.")
+  return "dev-qr-secret-only"
 }
 
 function b64url(input: string): string {
@@ -19,15 +21,6 @@ function fromB64url(input: string): string {
   return Buffer.from(input, "base64url").toString()
 }
 
-export function generateShortCode(shopId: string): string {
-  const secret = getSecret()
-  if (!secret) return "000000"
-  const hash = createHmac("sha256", secret).update(`short:${shopId}`).digest()
-  let num = 0n
-  for (let i = 0; i < 4; i++) num = (num << 8n) + BigInt(hash[i])
-  return num.toString(36).padStart(6, "0").slice(0, 6).toUpperCase()
-}
-
 export function generateQrToken(shopId: string): string {
   const secret = getSecret()
   if (!secret) return ""
@@ -36,7 +29,23 @@ export function generateQrToken(shopId: string): string {
   return b64url(`${payload}:${signature}`)
 }
 
-export function verifyQrToken(token: string): { shopId: string; valid: boolean; error?: string } {
+export interface QrTokenVerification {
+  shopId: string
+  valid: boolean
+  error?: string
+  timestamp?: number
+}
+
+/**
+ * Verifies a QR token's signature. By default tokens older than 24 hours are
+ * rejected. Stored shop QR codes (which are meant to be printed and left at a
+ * counter) should pass `{ ignoreExpiry: true }`; the "current QR" check against
+ * `Shop.qrToken` then becomes the source of truth instead of the timestamp.
+ */
+export function verifyQrToken(
+  token: string,
+  opts?: { ignoreExpiry?: boolean }
+): QrTokenVerification {
   try {
     const secret = getSecret()
     if (!secret) return { shopId: "", valid: false, error: "Server configuration error" }
@@ -61,11 +70,11 @@ export function verifyQrToken(token: string): { shopId: string; valid: boolean; 
     const timestamp = parseInt(payload.slice(firstColon + 1), 10)
 
     if (isNaN(timestamp)) return { shopId: "", valid: false, error: "Invalid token" }
-    if (Date.now() - timestamp > TOKEN_MAX_AGE_MS) {
+    if (!opts?.ignoreExpiry && Date.now() - timestamp > TOKEN_MAX_AGE_MS) {
       return { shopId: "", valid: false, error: "Token expired" }
     }
 
-    return { shopId, valid: true }
+    return { shopId, valid: true, timestamp }
   } catch {
     return { shopId: "", valid: false, error: "Invalid token" }
   }

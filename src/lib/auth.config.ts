@@ -55,12 +55,23 @@ export const authConfig: NextAuthConfig = {
       const shopRoutes = pathname.startsWith("/shop")
       const customerRoutes = pathname.startsWith("/customer")
       const authRoutes = pathname.startsWith("/auth")
+      const scanRoutes = pathname.startsWith("/customer/scan")
 
       if (authRoutes && isLoggedIn) {
         const home = role === "SHOP_OWNER" || role === "STAFF" ? "/shop/dashboard"
           : role === "CUSTOMER" ? "/customer/dashboard"
           : "/"
         return Response.redirect(new URL(home, nextUrl))
+      }
+
+      // Scan routes need the callbackUrl preserved so a logged-out customer who
+      // scans a QR returns to the scanner/upload flow after signing in.
+      if (scanRoutes && (!isLoggedIn || role !== "CUSTOMER")) {
+        if (!isLoggedIn) {
+          const callbackUrl = encodeURIComponent(pathname + nextUrl.search)
+          return Response.redirect(new URL(`/auth/customer-login?callbackUrl=${callbackUrl}`, nextUrl))
+        }
+        return Response.redirect(new URL("/shop/dashboard", nextUrl))
       }
 
       if (shopRoutes && (!isLoggedIn || (role !== "SHOP_OWNER" && role !== "STAFF"))) {
@@ -71,10 +82,6 @@ export const authConfig: NextAuthConfig = {
       if (customerRoutes && (!isLoggedIn || role !== "CUSTOMER")) {
         if (!isLoggedIn) return Response.redirect(new URL("/auth/customer-login", nextUrl))
         return Response.redirect(new URL("/shop/dashboard", nextUrl))
-      }
-
-      if (pathname.startsWith("/customer/scan") && !isLoggedIn) {
-        return Response.redirect(new URL("/auth/customer-login?callbackUrl=" + encodeURIComponent(pathname), nextUrl))
       }
 
       return true

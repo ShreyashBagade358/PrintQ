@@ -15,8 +15,13 @@ export async function getShopQrAction() {
   if (!shop) return { error: "No shop found" }
 
   let token = shop.qrToken
-  if (!token) {
+  if (token && verifyQrToken(token, { ignoreExpiry: true }).valid) {
+    // Stored token is healthy — reuse it. Stored QRs stay valid until the shop
+    // explicitly regenerates them, so printed/framed QRs never silently expire.
+  } else {
+    // Missing or corrupt token — generate a fresh one.
     token = generateQrToken(shop.id)
+    if (!token) return { error: "QR is not configured. Set NEXTAUTH_SECRET or QR_SECRET." }
     await prisma.shop.update({ where: { id: shop.id }, data: { qrToken: token, qrRegeneratedAt: new Date() } })
   }
 
@@ -41,6 +46,7 @@ export async function regenerateQrAction() {
   if (!shop) return { error: "No shop found" }
 
   const token = generateQrToken(shop.id)
+  if (!token) return { error: "QR is not configured. Set NEXTAUTH_SECRET or QR_SECRET." }
   await prisma.shop.update({
     where: { id: shop.id },
     data: { qrToken: token, qrRegeneratedAt: new Date() },
@@ -50,7 +56,7 @@ export async function regenerateQrAction() {
 }
 
 export async function verifyShopQrAction(token: string) {
-  const verified = verifyQrToken(token)
+  const verified = verifyQrToken(token, { ignoreExpiry: true })
   if (!verified.valid) return { valid: false, error: verified.error || "Invalid QR code" }
 
   const shop = await prisma.shop.findUnique({

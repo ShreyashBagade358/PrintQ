@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import type { Html5Qrcode } from "html5-qrcode"
 import { Button } from "@/components/ui/button"
 import { Camera, CameraOff, Loader2 } from "lucide-react"
+import { extractQrToken } from "@/lib/utils"
 
 interface CameraScannerProps {
   onScan: (token: string) => void
@@ -13,7 +15,7 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
   const [scanning, setScanning] = useState(false)
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [initializing, setInitializing] = useState(false)
-  const scannerRef = useRef<any>(null)
+  const scannerRef = useRef<Html5Qrcode | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const startedRef = useRef(false)
   const destroyRef = useRef(false)
@@ -27,6 +29,28 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
       }
     }
   }, [])
+
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try { await scannerRef.current.stop() } catch {}
+      scannerRef.current = null
+    }
+    startedRef.current = false
+    setScanning(false)
+    setInitializing(false)
+  }, [])
+
+  const handleDecoded = useCallback(
+    (decodedText: string) => {
+      const token = extractQrToken(decodedText)
+      if (token) {
+        stopScanner().then(() => onScan(token))
+      } else {
+        onError?.("Could not read QR code. Please try again.")
+      }
+    },
+    [onScan, onError, stopScanner]
+  )
 
   const startScanning = useCallback(async () => {
     if (destroyRef.current) return
@@ -46,34 +70,24 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
       // Wait for React to flush DOM update so viewfinder has dimensions
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 },
-        (decodedText) => {
-          const token = extractToken(decodedText)
-          if (token) {
-            stopScanner().then(() => onScan(token))
-          } else {
-            onError?.("Could not read QR code. Please try again.")
-          }
-        },
-        () => {}
-      ).catch(async () => {
-        if (destroyRef.current || startedRef.current) return
+      try {
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 },
+          handleDecoded,
+          () => {}
+        )
+      } catch {
+        // Environment camera unavailable — fall back to the front/facing user camera.
+        if (destroyRef.current) return
+        try { await scanner.stop() } catch {}
         await scanner.start(
           { facingMode: "user" },
           { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 },
-          (decodedText) => {
-            const token = extractToken(decodedText)
-            if (token) {
-              stopScanner().then(() => onScan(token))
-            } else {
-              onError?.("Could not read QR code. Please try again.")
-            }
-          },
+          handleDecoded,
           () => {}
         )
-      })
+      }
     } catch (e) {
       startedRef.current = false
       scannerRef.current = null
@@ -86,17 +100,7 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
         onError?.("Could not start camera. Try pasting the code manually.")
       }
     }
-  }, [onScan, onError])
-
-  const stopScanner = useCallback(async () => {
-    if (scannerRef.current) {
-      try { await scannerRef.current.stop() } catch {}
-      scannerRef.current = null
-    }
-    startedRef.current = false
-    setScanning(false)
-    setInitializing(false)
-  }, [])
+  }, [onError, handleDecoded])
 
   return (
     <div className="space-y-3">
@@ -132,13 +136,4 @@ export function CameraScanner({ onScan, onError }: CameraScannerProps) {
       )}
     </div>
   )
-}
-
-function extractToken(input: string): string | null {
-  const trimmed = input.trim()
-  const urlPattern = /\/customer\/scan\/([A-Za-z0-9_=-]+)/
-  const match = trimmed.match(urlPattern)
-  if (match) return match[1]
-  if (/^[A-Za-z0-9_=-]+$/.test(trimmed)) return trimmed
-  return null
 }

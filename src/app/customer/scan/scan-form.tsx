@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { QrCode, ScanLine, Loader2, Camera, Keyboard } from "lucide-react"
 import { CameraScanner } from "@/components/scan/camera-scanner"
+import { extractQrToken } from "@/lib/utils"
 
 export function ScanForm() {
   const [token, setToken] = useState("")
@@ -22,10 +23,10 @@ export function ScanForm() {
     if (!val) { toast.error("Please enter or paste a QR code"); return }
 
     setLoading(true)
-    try {
-      const path = extractToken(val)
+    const path = extractQrToken(val)
+    if (path) {
       router.push(`/customer/scan/${path}`)
-    } catch {
+    } else {
       toast.error("Invalid QR code format")
       setLoading(false)
     }
@@ -35,11 +36,11 @@ export function ScanForm() {
     const text = await navigator.clipboard.readText()
     if (text) {
       setToken(text)
-      try {
-        const path = extractToken(text)
+      const path = extractQrToken(text)
+      if (path) {
         setLoading(true)
         router.push(`/customer/scan/${path}`)
-      } catch {
+      } else {
         toast.error("Clipboard content is not a valid QR code")
       }
     }
@@ -116,13 +117,4 @@ export function ScanForm() {
       </CardContent>
     </Card>
   )
-}
-
-function extractToken(input: string): string {
-  const trimmed = input.trim()
-  const urlPattern = /\/customer\/scan\/([A-Za-z0-9_-]+)$/
-  const match = trimmed.match(urlPattern)
-  if (match) return match[1]
-  if (/^[A-Za-z0-9_-]+$/.test(trimmed)) return trimmed
-  throw new Error("Invalid format")
 }

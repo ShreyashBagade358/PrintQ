@@ -76,6 +76,15 @@ export function cnx(...classes: (string | boolean | undefined | null)[]): string
   return classes.filter(Boolean).join(" ")
 }
 
+export function extractQrToken(input: string): string | null {
+  const trimmed = input.trim()
+  const urlPattern = /\/customer\/scan\/([A-Za-z0-9_=-]+)/
+  const match = trimmed.match(urlPattern)
+  if (match) return match[1]
+  if (/^[A-Za-z0-9_=-]+$/.test(trimmed)) return trimmed
+  return null
+}
+
 export function timeAgo(date: Date | string): string {
   const now = new Date()
   const d = typeof date === "string" ? new Date(date) : date

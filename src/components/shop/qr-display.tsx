@@ -5,8 +5,17 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { QrCode, Download, Share2, Check, Copy, Loader2, Store, Key } from "lucide-react"
-import { getShopQrAction } from "@/lib/actions/qr.actions"
+import { QrCode, Download, Share2, Check, Copy, Loader2, Store, Key, RefreshCw, AlertTriangle } from "lucide-react"
+import { getShopQrAction, regenerateQrAction } from "@/lib/actions/qr.actions"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 interface QrData {
   shopId: string
@@ -22,6 +31,8 @@ export function QrDisplay() {
   const [loading, setLoading] = useState(true)
   const [qrDataUrl, setQrDataUrl] = useState<string>("")
   const [copied, setCopied] = useState(false)
+  const [regenerateOpen, setRegenerateOpen] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
 
   const fetchQr = useCallback(async () => {
     const result = await getShopQrAction()
@@ -66,6 +77,21 @@ export function QrDisplay() {
     toast.success("Scan link copied to clipboard")
   }
 
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    const result = await regenerateQrAction()
+    setRegenerating(false)
+    setRegenerateOpen(false)
+    if ("error" in result) {
+      toast.error(result.error)
+      return
+    }
+    setData((prev) =>
+      prev ? { ...prev, qrToken: result.qrToken, regeneratedAt: result.regeneratedAt } : prev
+    )
+    toast.success("QR code regenerated. Old QR codes no longer work.")
+  }
+
   if (loading) {
     return (
       <Card>
@@ -87,7 +113,11 @@ export function QrDisplay() {
           <div className="flex flex-col items-center gap-5">
             <div className="relative rounded-2xl border-2 border-primary/20 bg-white p-4 shadow-sm">
               {qrDataUrl ? (
-                <img src={qrDataUrl} alt={`${data?.shopName} QR code`} className="h-48 w-48 object-contain" />
+                <img
+                  src={qrDataUrl}
+                  alt={`${data?.shopName} QR code`}
+                  className={cn("h-48 w-48 object-contain transition-opacity duration-300", regenerating && "opacity-40")}
+                />
               ) : (
                 <div className="flex h-48 w-48 items-center justify-center bg-muted rounded-lg">
                   <QrCode className="h-12 w-12 text-muted-foreground" />
@@ -126,6 +156,9 @@ export function QrDisplay() {
               }} className="gap-2">
                 <Share2 className="h-4 w-4" /> Share
               </Button>
+              <Button variant="destructive" size="sm" onClick={() => setRegenerateOpen(true)} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Regenerate
+              </Button>
             </div>
 
             <p className="text-xs text-muted-foreground">
@@ -134,6 +167,28 @@ export function QrDisplay() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={regenerateOpen} onOpenChange={setRegenerateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> Regenerate QR code?
+            </DialogTitle>
+            <DialogDescription>
+              This immediately invalidates the current QR code. Any printed or shared copies of the
+              old QR will stop working. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRegenerateOpen(false)} disabled={regenerating}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRegenerate} loading={regenerating}>
+              {regenerating ? "Regenerating..." : "Regenerate QR"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }
